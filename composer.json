@@ -1,0 +1,55 @@
+{
+    "name": "webhappens/prismic",
+    "description": "A Laravel package for using Prismic.io",
+    "keywords": [
+        "webhappens",
+        "prismic"
+    ],
+    "homepage": "https://github.com/webhappens/prismic",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ben Gurney",
+            "email": "ben@webhappens.co.uk",
+            "homepage": "https://webhappens.co.uk",
+            "role": "Developer"
+        },
+        {
+            "name": "Same Leicester",
+            "email": "sam@webhappens.co.uk",
+            "homepage": "https://webhappens.co.uk",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "prismic/php-sdk": "^5.0"
+    },
+    "require-dev": {
+        "mockery/mockery": "^1.1",
+        "orchestra/testbench": "~3.0",
+        "phpunit/phpunit": "^7.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "WebHappens\\Prismic\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "WebHappens\\Prismic\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "WebHappens\\Prismic\\PrismicServiceProvider"
+            ]
+        }
+    }
+}
