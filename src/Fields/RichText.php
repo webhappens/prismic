@@ -24,21 +24,17 @@ class RichText implements Htmlable
 
     public function toHtml(): HtmlString
     {
-        return new HtmlString($this->asHtml());
+        return new HtmlString(
+            PrismicRichText::asHtml(
+                $this->data,
+                resolve(DocumentUrlResolver::class),
+                resolve(RichTextHtmlSerializer::class)
+            )
+        );
     }
 
     public function __toString()
     {
-        return $this->asText();
-    }
-
-    protected function asText(): string
-    {
         return trim(PrismicRichText::asText($this->data));
-    }
-
-    protected function asHtml(): string
-    {
-        return PrismicRichText::asHtml($this->data, resolve(DocumentUrlResolver::class), resolve(RichTextHtmlSerializer::class));
     }
 }

@@ -31,6 +31,7 @@ class PrismicServiceProvider extends ServiceProvider
 
         $this->app->bind(\WebHappens\Prismic\Contracts\Fields\RichTextHtmlSerializer::class, \WebHappens\Prismic\Fields\RichTextHtmlSerializer::class);
         $this->app->bind(\WebHappens\Prismic\Contracts\Fields\LinkHtmlSerializer::class, \WebHappens\Prismic\Fields\LinkHtmlSerializer::class);
+        $this->app->bind(\WebHappens\Prismic\Contracts\Fields\DateHtmlSerializer::class, \WebHappens\Prismic\Fields\DateHtmlSerializer::class);
 
         $this->mergeConfigFrom(__DIR__ . '/../config/prismic.php', 'prismic');
     }

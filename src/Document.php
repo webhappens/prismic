@@ -4,9 +4,8 @@ namespace WebHappens\Prismic;
 
 use Exception;
 use Prismic\Api;
-use Carbon\Carbon;
-use Prismic\Dom\Date;
 use Prismic\Predicates;
+use WebHappens\Prismic\Fields\Date;
 use WebHappens\Prismic\DocumentResolver;
 use Illuminate\Support\Collection as IlluminateCollection;
 
@@ -126,10 +125,7 @@ abstract class Document
     public function __construct($data)
     {
         $this->id = data_get($data, 'id');
-
-        $lastPublished = data_get($data, 'last_publication_date');
-        $this->lastPublished = $lastPublished ? Carbon::instance(Date::asDate($lastPublished)) : null;
-
+        $this->lastPublished = data_get($data, 'last_publication_date');
         $this->_data = data_get($data, 'data');
 
         $this->hydrate();
@@ -140,9 +136,13 @@ abstract class Document
         return $this->id;
     }
 
-    public function getLastPublished(): ?Carbon
+    public function getLastPublished(): ?Date
     {
-        return $this->lastPublished;
+        if ( ! $lastPublished = $this->lastPublished) {
+            return null;
+        }
+
+        return Date::make($lastPublished);
     }
 
     public function getSlices($types = []): IlluminateCollection
