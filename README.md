@@ -75,7 +75,7 @@ Article::chunk(100, function ($articles) {
 
 Please note that the largest chunk size is 100 due to a limit on the Prismic API.
 
-### Retrieving Single Documents
+#### Single Documents
 
 In addition to retrieving all Documents for a given type, you may also retrieve single records by passing the Document ID into the `find` method. Instead of returning a Laravel Collection, this method returns a single Document instance:
 
@@ -84,7 +84,7 @@ In addition to retrieving all Documents for a given type, you may also retrieve 
 $article = Article::find('WAjgAygABN3B0a-a');
 ```
 
-#### Retrieving Single Type Documents
+#### Single Type Documents
 If you have created a Single Type Document, a Homepage, for example, you may use the `single` method to retrieve the Document model instance, without having to pass a Document ID:
 
 ```php
