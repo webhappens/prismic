@@ -19,33 +19,11 @@ class Prismic
         return new static;
     }
 
-    public static function findDocumentByType($type): ?string
-    {
-        foreach (static::$documents as $document) {
-            if ($document::getType() == $type) {
-                return $document;
-            }
-        }
-
-        return null;
-    }
-
     public static function slices(array $slices): Prismic
     {
         static::$slices = array_merge(static::$slices, $slices);
 
         return new static;
-    }
-
-    public static function findSliceByType($type): ?string
-    {
-        foreach (static::$slices as $slice) {
-            if ($slice::getType() == $type) {
-                return $slice;
-            }
-        }
-
-        return null;
     }
 
     public static function preview($token): RedirectResponse

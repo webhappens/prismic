@@ -16,9 +16,20 @@ abstract class Slice implements Htmlable
         return static::$type;
     }
 
-    public static function make(...$args): Slice
+    public static function resolveClassFromType($type): ?string
     {
-        return new static(...$args);
+        foreach (Prismic::$slices as $slice) {
+            if ($slice::getType() == $type) {
+                return $slice;
+            }
+        }
+
+        return null;
+    }
+
+    public static function make(...$parameters): Slice
+    {
+        return new static(...$parameters);
     }
 
     public function __construct($data)

@@ -12,9 +12,9 @@ class Date implements Htmlable
     protected $carbon;
     protected $stringValue;
 
-    public static function make(...$args): Date
+    public static function make(...$parameters): Date
     {
-        return new static(...$args);
+        return new static(...$parameters);
     }
 
     public function __construct($date)
@@ -45,9 +45,9 @@ class Date implements Htmlable
         return $this->stringValue;
     }
 
-    public function __call($name, $args)
+    public function __call($method, $parameters)
     {
-        $carbon = $this->carbon->{$name}(...$args);
+        $carbon = $this->carbon->{$method}(...$parameters);
 
         if ($carbon instanceOf Carbon) {
             $this->setCarbonInstance($carbon);

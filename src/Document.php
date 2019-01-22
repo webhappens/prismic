@@ -2,28 +2,51 @@
 
 namespace WebHappens\Prismic;
 
-use Exception;
-use Prismic\Api;
-use Prismic\Predicates;
+use stdClass;
+use ArrayAccess;
+use Illuminate\Support\Collection;
 use WebHappens\Prismic\Fields\Date;
+use WebHappens\Prismic\HasHierarchy;
+use WebHappens\Prismic\HasAttributes;
+use WebHappens\Prismic\Fields\RichText;
 use WebHappens\Prismic\DocumentResolver;
-use Illuminate\Support\Collection as IlluminateCollection;
+use Illuminate\Support\Traits\ForwardsCalls;
 
-abstract class Document
+abstract class Document implements ArrayAccess
 {
+    use HasAttributes,
+        HasHierarchy,
+        ForwardsCalls;
+
     protected static $type;
     protected static $isSingle = false;
-    protected static $validParents = [];
-
-    protected $id;
-    protected $lastPublished;
 
     private $_data;
-    private $_ancestors;
+
+    public static function resolve(...$parameters): ?Document
+    {
+        return resolve(DocumentResolver::class)->resolve(...$parameters);
+    }
+
+    public static function make(): Document
+    {
+        return new static;
+    }
 
     public static function getType(): string
     {
         return static::$type;
+    }
+
+    public static function resolveClassFromType($type): ?string
+    {
+        foreach (Prismic::$documents as $document) {
+            if ($document::getType() == $type) {
+                return $document;
+            }
+        }
+
+        return null;
     }
 
     public static function isSingle(): bool
@@ -31,124 +54,30 @@ abstract class Document
         return static::$isSingle;
     }
 
-    public static function single(): Document
+    public static function all(): Collection
     {
-        return static::make(
-            resolve(Api::class)->getSingle(static::$type)
-        );
+        return static::make()->newQuery()->get();
     }
 
-    public static function find($id): ?Document
+    public function isLinkable()
     {
-        if (is_null($id)) {
-            return null;
-        }
-
-        $response = resolve(Api::class)->query([
-            Predicates::at("document.id", $id),
-            Predicates::at("document.type", static::$type),
-        ]);
-
-        if ( ! $results = $response->results) {
-            return null;
-        }
-
-        return static::make($results[0]);
+        return isset($this->url, $this->title);
     }
 
-    public static function where($field, $value): IlluminateCollection
+    public function getFirstPublishedAttribute($value)
     {
-        $value = array_wrap($value);
-
-        $response = resolve(Api::class)->query(
-            Predicates::any("my." . static::$type . "." . $field, $value)
-        );
-
-        return collect($response->results)->map(function ($result) {
-            return static::make($result);
-        });
+        return Date::make($value);
     }
 
-    public static function all(): IlluminateCollection
+    public function getLastPublishedAttribute($value)
     {
-        $results = collect();
-
-        self::chunk(100, function ($chunk) use ($results) {
-            $results->push($chunk);
-        });
-
-        return $results->flatten();
+        return Date::make($value);
     }
 
-    public static function chunk($limit, Callable $callback)
-    {
-        if ($limit > 100) {
-            // This limit is set by the Prismic API
-            throw new Exception('The maximum chunk limit is 100');
-        }
-
-        $response = resolve(Api::class)->query(
-            Predicates::at("document.type", static::$type),
-            ['pageSize' => $limit]
-        );
-
-        $callback(
-            collect($response->results)->map(function ($result) {
-                return static::find($result->id);
-            })
-        );
-
-        for ($page = 2; $page <= $response->total_pages; $page++) {
-            $response = resolve(Api::class)->query(
-                Predicates::at("document.type", static::$type),
-                ['pageSize' => $limit, 'page' => $page]
-            );
-
-            $callback(
-                collect($response->results)->map(function ($result) {
-                    return static::find($result->id);
-                })
-            );
-        }
-    }
-
-    public static function resolve(...$args) : ?Document
-    {
-        return resolve(DocumentResolver::class)->resolve(...$args);
-    }
-
-    public static function make(...$args): Document
-    {
-        return new static(...$args);
-    }
-
-    public function __construct($data)
-    {
-        $this->id = data_get($data, 'id');
-        $this->lastPublished = data_get($data, 'last_publication_date');
-        $this->_data = data_get($data, 'data');
-
-        $this->hydrate();
-    }
-
-    public function getId(): string
-    {
-        return $this->id;
-    }
-
-    public function getLastPublished(): ?Date
-    {
-        if ( ! $lastPublished = $this->lastPublished) {
-            return null;
-        }
-
-        return Date::make($lastPublished);
-    }
-
-    public function getSlices($types = []): IlluminateCollection
+    public function getSlices($types = []): Collection
     {
         $types = array_wrap($types);
-        $slices = collect($this->data('body') ?? []);
+        $slices = collect($this->data('body', []));
 
         if (count($types)) {
             $slices = $slices->filter(function ($data) use ($types) {
@@ -158,59 +87,81 @@ abstract class Document
 
         return $slices
             ->map(function ($data) {
-                if ($slice = Prismic::findSliceByType(data_get($data, 'slice_type'))) {
+                if ($slice = Slice::resolveClassFromType(data_get($data, 'slice_type'))) {
                     return $slice::make($data);
                 }
             })
             ->filter();
     }
 
-    public function getParent(): ?Document
+    public function data($key = null, $default = null)
     {
-        foreach (static::$validParents as $validParent) {
-            $parent = $validParent::all()->first(function ($document) {
-                return $document->getChildren()->first(function ($child) {
-                    return $child->getId() == $this->getId();
-                });
-            });
-
-            if ($parent) {
-                return $parent;
-            }
+        if (func_num_args() === 0) {
+            return $this->_data;
         }
 
-        return null;
+        return data_get($this->_data, $key, $default);
     }
 
-    public function getAncestors(Document $document = null): IlluminateCollection
+    public function setData($data)
     {
-        if ( ! $this->_ancestors instanceOf IlluminateCollection) {
-            $this->_ancestors = collect();
+        $this->_data = $data;
+
+        return $this;
+    }
+
+    public function hydrateAttributes(stdClass $result)
+    {
+        $this->attributes['id'] = data_get($result, 'id');
+        $this->attributes['apiUrl'] = data_get($result, 'href');
+        $this->attributes['firstPublished'] = data_get($result, 'first_publication_date');
+        $this->attributes['lastPublished'] = data_get($result, 'last_publication_date');
+        $this->attributes['language'] = data_get($result, 'lang');
+
+        foreach ($this->attributeMap as $attribute => $key) {
+            $this->attributes[$attribute] = data_get($result, 'data.' . $key);
         }
 
-        if (is_null($document)) {
-            $document = $this;
+        return $this;
+    }
+
+    public function newFromResponseResult(stdClass $result): Document
+    {
+        return static::make()
+            ->setData(data_get($result, 'data'))
+            ->hydrateAttributes($result);
+    }
+
+    public function newQuery(): Query
+    {
+        return (new Query)
+            ->setDocument($this)
+            ->where('document.type', $this->getType());
+    }
+
+    public function __call($method, $parameters)
+    {
+        return $this->forwardCallTo($this->newQuery(), $method, $parameters);
+    }
+
+    public static function __callStatic($method, $parameters)
+    {
+        return static::make()->$method(...$parameters);
+    }
+
+    protected function customCastAttribute($type, $value)
+    {
+        switch ($type) {
+            case "date":
+                return Date::make($value);
+            case "richtext":
+                return RichText::make($value);
+            case "richtext_string":
+                return (string) RichText::make($value);
+            case "url":
+                return url($value);
         }
 
-        if ($parent = $document->getParent()) {
-            $this->_ancestors->prepend($parent);
-            $this->getAncestors($parent);
-        }
-
-        return $this->_ancestors;
-    }
-
-    public function getChildren(): IlluminateCollection
-    {
-        return collect();
-    }
-
-    protected function hydrate()
-    {
-    }
-
-    protected function data($field, $default = null)
-    {
-        return data_get($this->_data, $field, $default);
+        return $value;
     }
 }

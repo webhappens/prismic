@@ -4,7 +4,6 @@ namespace WebHappens\Prismic\Fields;
 
 use UnexpectedValueException;
 use WebHappens\Prismic\Document;
-use WebHappens\Prismic\Contracts\Linkable;
 
 class DocumentLink extends Link
 {
@@ -12,13 +11,13 @@ class DocumentLink extends Link
 
     public function __construct(Document $document, $title = null)
     {
-        if ( ! $document instanceOf Linkable) {
-            throw new UnexpectedValueException('Document "' . get_class($document) . '" must implement Linkable interface.');
+        if ( ! $document->isLinkable()) {
+            throw new UnexpectedValueException('Document "' . get_class($document) . '" must have "url" and "title" attributes set.');
         }
 
         parent::__construct(
-            $document->getUrl(),
-            $title ?: $document->getTitle()
+            $document->url,
+            $title ?: $document->title
         );
 
         $this->document = $document;

@@ -12,9 +12,9 @@ class RichText implements Htmlable
 {
     protected $data;
 
-    public static function make(...$args): RichText
+    public static function make(...$parameters): RichText
     {
-        return new static(...$args);
+        return new static(...$parameters);
     }
 
     public function __construct($data)

@@ -4,24 +4,23 @@ namespace WebHappens\Prismic\Fields;
 
 use Illuminate\Support\HtmlString;
 use Illuminate\Contracts\Support\Htmlable;
-use WebHappens\Prismic\Contracts\Linkable;
 use WebHappens\Prismic\Fields\LinkResolver;
 use WebHappens\Prismic\Contracts\Fields\LinkHtmlSerializer;
 
-abstract class Link implements Linkable, Htmlable
+abstract class Link implements Htmlable
 {
     protected $url;
     protected $title;
     protected $attributes = [];
 
-    public static function resolve(...$args): ?Link
+    public static function resolve(...$parameters): ?Link
     {
-        return resolve(LinkResolver::class)->resolve(...$args);
+        return resolve(LinkResolver::class)->resolve(...$parameters);
     }
 
-    public static function make(...$args): Link
+    public static function make(...$parameters): Link
     {
-        return new static(...$args);
+        return new static(...$parameters);
     }
 
     public function __construct($url, $title = null)
