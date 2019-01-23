@@ -27,7 +27,7 @@ class Query
             return null;
         }
 
-        return $this->where('document.id', $id)->first();
+        return $this->where('id', $id)->first();
     }
 
     public function findMany(array $ids): Collection
@@ -36,7 +36,7 @@ class Query
             return collect();
         }
 
-        return $this->where('document.id', 'in', $ids)->get();
+        return $this->where('id', 'in', $ids)->get();
     }
 
     public function single(): ?Document
@@ -51,7 +51,9 @@ class Query
             $predicate = 'at';
         }
 
-        if ( ! starts_with($field, 'document.')) {
+        if (in_array($field, $this->document->getGlobalFieldKeys())) {
+            $field = 'document.' . $field;
+        } else {
             $field = 'my.' . $this->document->getType() . '.' . $field;
         }
 
@@ -91,7 +93,7 @@ class Query
 
         $callback(
             collect($response->results)->map(function ($result) {
-                return $this->document->newFromResponseResult($result);
+                return $this->document->newHydratedInstance($result);
             })
         );
 
@@ -100,7 +102,7 @@ class Query
 
             $callback(
                 collect($response->results)->map(function ($result) {
-                    return $this->document->newFromResponseResult($result);
+                    return $this->document->newHydratedInstance($result);
                 })
             );
         }

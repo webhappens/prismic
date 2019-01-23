@@ -22,6 +22,11 @@ class RichText implements Htmlable
         $this->data = $data;
     }
 
+    public function asText(): string
+    {
+        return $this->__toString();
+    }
+
     public function toHtml(): HtmlString
     {
         return new HtmlString(

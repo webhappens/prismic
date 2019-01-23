@@ -9,7 +9,10 @@ abstract class Slice implements Htmlable
 {
     protected static $type;
 
+    protected $viewName;
     protected $_data;
+
+    abstract public function toHtml(): HtmlString;
 
     public static function getType(): string
     {
@@ -37,7 +40,17 @@ abstract class Slice implements Htmlable
         $this->_data = $data;
     }
 
-    abstract public function toHtml(): HtmlString;
+    public function using($viewName)
+    {
+        $this->viewName = $viewName;
+
+        return $this;
+    }
+
+    public function viewName()
+    {
+        return $this->viewName ?: 'slices.' . static::getType();
+    }
 
     protected function data($field, $default = null)
     {

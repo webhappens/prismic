@@ -20,6 +20,8 @@ trait HasAttributes
             return;
         }
 
+        $key = Str::snake($key);
+
         if (array_key_exists($key, $this->attributes) || $this->hasAttributeAccessor($key)) {
             return $this->getAttributeValue($key);
         }
@@ -52,6 +54,8 @@ trait HasAttributes
 
     public function setAttribute($key, $value)
     {
+        $key = Str::snake($key);
+
         if ($this->hasAttributeMutator($key)) {
             return $this->callAttributeMutator($key, $value);
         }
@@ -83,7 +87,7 @@ trait HasAttributes
 
     protected function castAttribute($key, $value)
     {
-        if ( ! is_null($value) && method_exists($this, 'customCastAttribute')) {
+        if ( ! empty($value) && method_exists($this, 'customCastAttribute')) {
             $value = $this->customCastAttribute($this->getCastType($key), $value);
         }
 

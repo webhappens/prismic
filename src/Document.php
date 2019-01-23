@@ -19,9 +19,27 @@ abstract class Document implements ArrayAccess
         ForwardsCalls;
 
     protected static $type;
+
     protected static $isSingle = false;
 
-    private $_data;
+    protected $globalFieldKeys = [
+        'id', 'uid', 'type', 'href', 'tags', 'first_publication_date',
+        'last_publication_date', 'lang', 'alternate_languages',
+    ];
+
+    protected $globalMaps = [
+        'href' => 'api_id',
+        'first_publication_date' => 'first_published',
+        'last_publication_date' => 'last_published',
+        'lang' => 'language',
+    ];
+
+    protected $globalCasts = [
+        'first_published' => 'date',
+        'last_published' => 'date',
+    ];
+
+    protected $maps = [];
 
     public static function resolve(...$parameters): ?Document
     {
@@ -59,25 +77,15 @@ abstract class Document implements ArrayAccess
         return static::make()->newQuery()->get();
     }
 
-    public function isLinkable()
+    public function isLinkable(): bool
     {
         return isset($this->url, $this->title);
-    }
-
-    public function getFirstPublishedAttribute($value)
-    {
-        return Date::make($value);
-    }
-
-    public function getLastPublishedAttribute($value)
-    {
-        return Date::make($value);
     }
 
     public function getSlices($types = []): Collection
     {
         $types = array_wrap($types);
-        $slices = collect($this->data('body', []));
+        $slices = collect($this->body ?? []);
 
         if (count($types)) {
             $slices = $slices->filter(function ($data) use ($types) {
@@ -94,49 +102,57 @@ abstract class Document implements ArrayAccess
             ->filter();
     }
 
-    public function data($key = null, $default = null)
+    public function newHydratedInstance(stdClass $result): Document
     {
-        if (func_num_args() === 0) {
-            return $this->_data;
+        return static::make()->hydrate($result);
+    }
+
+    public function hydrate(stdClass $result)
+    {
+        $attributes = [];
+
+        foreach ($this->globalFieldKeys as $key) {
+            $attributes[$key] = $result->{$key};
         }
 
-        return data_get($this->_data, $key, $default);
-    }
+        foreach ($result->data as $key => $value) {
+            $attributes[$key] = $value;
+        }
 
-    public function setData($data)
-    {
-        $this->_data = $data;
+        $maps = $this->getMaps();
 
-        return $this;
-    }
+        foreach ($attributes as $key => $value) {
+            if (array_key_exists($key, $maps)) {
+                unset($attributes[$key]);
+                $key = $maps[$key];
+            }
 
-    public function hydrateAttributes(stdClass $result)
-    {
-        $this->attributes['id'] = data_get($result, 'id');
-        $this->attributes['apiUrl'] = data_get($result, 'href');
-        $this->attributes['firstPublished'] = data_get($result, 'first_publication_date');
-        $this->attributes['lastPublished'] = data_get($result, 'last_publication_date');
-        $this->attributes['language'] = data_get($result, 'lang');
-
-        foreach ($this->attributeMap as $attribute => $key) {
-            $this->attributes[$attribute] = data_get($result, 'data.' . $key);
+            $this->{$key} = $value;
         }
 
         return $this;
-    }
-
-    public function newFromResponseResult(stdClass $result): Document
-    {
-        return static::make()
-            ->setData(data_get($result, 'data'))
-            ->hydrateAttributes($result);
     }
 
     public function newQuery(): Query
     {
         return (new Query)
             ->setDocument($this)
-            ->where('document.type', $this->getType());
+            ->where('type', $this->getType());
+    }
+
+    public function getGlobalFieldKeys()
+    {
+        return $this->globalFieldKeys;
+    }
+
+    public function getMaps()
+    {
+        return array_merge($this->globalMaps, $this->maps);
+    }
+
+    public function getCasts()
+    {
+        return array_merge($this->globalCasts, $this->casts);
     }
 
     public function __call($method, $parameters)
@@ -156,8 +172,6 @@ abstract class Document implements ArrayAccess
                 return Date::make($value);
             case "richtext":
                 return RichText::make($value);
-            case "richtext_string":
-                return (string) RichText::make($value);
             case "url":
                 return url($value);
         }
