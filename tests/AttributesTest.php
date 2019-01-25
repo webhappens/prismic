@@ -3,18 +3,18 @@
 namespace WebHappens\Prismic\Tests;
 
 use Carbon\Carbon;
-use WebHappens\Prismic\Tests\Stubs\Model;
+use WebHappens\Prismic\Tests\Stubs\ModelStub;
 
 class AttributesTest extends TestCase
 {
     public function testAttributeManipulation()
     {
-        $model = new Model;
+        $model = new ModelStub;
         $model->foo_bar = 'foobar';
         $this->assertEquals('foobar', $model->foo_bar);
         $this->assertEquals('foobar', $model->fooBar);
 
-        $model = new Model;
+        $model = new ModelStub;
         $model->fooBar = 'foobar';
         $this->assertEquals('foobar', $model->foo_bar);
         $this->assertEquals('foobar', $model->fooBar);
@@ -22,7 +22,7 @@ class AttributesTest extends TestCase
 
     public function testIssetAndUnset()
     {
-        $model = new Model;
+        $model = new ModelStub;
         $model->foo_bar = 'foobar';
         $this->assertTrue(isset($model->foo_bar));
         $this->assertTrue(isset($model->fooBar));
@@ -30,7 +30,7 @@ class AttributesTest extends TestCase
         $this->assertFalse(isset($model->foo_bar));
         $this->assertFalse(isset($model->fooBar));
 
-        $model = new Model;
+        $model = new ModelStub;
         $model->fooBar = 'foobar';
         $this->assertTrue(isset($model->foo_bar));
         $this->assertTrue(isset($model->fooBar));
@@ -41,7 +41,7 @@ class AttributesTest extends TestCase
 
     public function testAccessorsAndMutators()
     {
-        $model = new Model;
+        $model = new ModelStub;
         $model->first_name = 'ben';
         $model->last_name = 'gurney';
         $this->assertEquals('Ben Gurney', $model->name);
@@ -49,12 +49,12 @@ class AttributesTest extends TestCase
 
     public function testArrayAccess()
     {
-        $model = new Model;
+        $model = new ModelStub;
         $model->foo_bar = 'foobar';
         $this->assertEquals('foobar', $model['foo_bar']);
         $this->assertEquals('foobar', $model['fooBar']);
 
-        $model = new Model;
+        $model = new ModelStub;
         $model->fooBar = 'foobar';
         $this->assertEquals('foobar', $model['foo_bar']);
         $this->assertEquals('foobar', $model['fooBar']);
@@ -62,7 +62,7 @@ class AttributesTest extends TestCase
 
     public function testAttributeCast()
     {
-        $model = new Model;
+        $model = new ModelStub;
         $model->last_updated = '2019-01-01';
         $this->assertInstanceOf(Carbon::class, $model->last_updated);
         $this->assertInstanceOf(Carbon::class, $model->lastUpdated);

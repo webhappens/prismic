@@ -108,17 +108,23 @@ class Query
         }
     }
 
-    public function getRaw(): stdClass
+    public function toPredicates(): array
     {
-        $predicates = collect($this->wheres)
+        return collect($this->wheres)
             ->map(function ($where) {
                 extract($where);
 
                 return Predicates::{$predicate}($field, $value);
             })
             ->toArray();
+    }
 
-        return $this->api()->query($predicates);
+    public function getRaw(): stdClass
+    {
+        return $this->api()->query(
+            $this->toPredicates(),
+            $this->options
+        );
     }
 
     public function options(array $options = [])
@@ -128,7 +134,7 @@ class Query
         return $this;
     }
 
-    public function api(): Api
+    public function api()
     {
         return resolve(Api::class);
     }

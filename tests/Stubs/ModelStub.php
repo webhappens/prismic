@@ -10,7 +10,7 @@ abstract class BaseModel implements ArrayAccess {
     use HasAttributes;
 }
 
-class Model extends BaseModel
+class ModelStub extends BaseModel
 {
     protected $casts = [
         'last_updated' => 'date',
