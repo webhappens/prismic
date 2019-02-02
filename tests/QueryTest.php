@@ -5,6 +5,7 @@ namespace WebHappens\Prismic\Tests;
 use stdClass;
 use Prismic\Api;
 use Mockery as m;
+use Prismic\SimplePredicate;
 use WebHappens\Prismic\Query;
 use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
@@ -57,6 +58,52 @@ class QueryTest extends TestCase
         $queryMock->shouldReceive('get')->once()->andReturn($collectionMock);
         $collectionMock->shouldReceive('first');
         $result = $queryMock->first();
+    }
+
+    public function testWhereConvertsToPredicates()
+    {
+        $document = DocumentStub::make();
+
+        $predicates = (new Query)
+            ->setDocument($document)
+            ->where('id', '1')
+            ->where('name', 'in', ['ben', 'sam'])
+            ->toPredicates();
+
+        $this->assertCount(2, $predicates);
+        $this->assertInstanceOf(SimplePredicate::class, $predicates[0]);
+        $this->assertEquals('[:d = at(document.id, "1")]', $predicates[0]->q());
+        $this->assertInstanceOf(SimplePredicate::class, $predicates[1]);
+        $this->assertEquals('[:d = in(my.example_document.name, ["ben", "sam"])]', $predicates[1]->q());
+    }
+
+    public function testChunk()
+    {
+        $document = DocumentStub::make();
+
+        $result = (object) array_fill_keys($document->getGlobalFieldKeys(), 'foo');
+        $result->data = (object) ['field' => 'bar'];
+
+        $raw = (object) [
+            'total_pages' => 3,
+            'results' => [$result, $result],
+        ];
+
+        $queryMock = m::mock(Query::class . '[options,getRaw]');
+        $queryMock->setDocument($document);
+        $queryMock->shouldReceive('options')->times(3)->andReturn($queryMock);
+        $queryMock->shouldReceive('getRaw')->times(3)->andReturn($raw, $raw, $raw);
+
+        $count = 0;
+
+        $queryMock->chunk(2, function ($chunk) use (&$count) {
+            foreach ($chunk as $document) {
+                $count++;
+                $this->assertInstanceOf(Document::class, $document);
+            }
+        });
+
+        $this->assertEquals(6, $count);
     }
 
     public function testGetRaw()
