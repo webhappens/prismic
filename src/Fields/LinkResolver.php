@@ -10,7 +10,10 @@ class LinkResolver
     {
         switch (data_get($data, 'link_type')) {
             case "Web":
-                return WebLink::make(data_get($data, 'url'), $title);
+                return WebLink::make(data_get($data, 'url'), $title)
+                    ->openInNewTab(
+                        (bool) data_get($data, 'target') == '_blank'
+                    );
 
             case "Media":
                 return MediaLink::make(data_get($data, 'url'), $title, $data);

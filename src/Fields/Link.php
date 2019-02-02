@@ -39,6 +39,17 @@ abstract class Link implements Htmlable
         return $this->title;
     }
 
+    public function openInNewTab(bool $bool = true): Link
+    {
+        if ($bool) {
+            $this->attributes(['target' => '_blank']);
+        } else {
+            unset($this->attributes['target']);
+        }
+
+        return $this;
+    }
+
     public function attributes(array $attributes): Link
     {
         $this->attributes = array_merge($this->attributes, $attributes);
