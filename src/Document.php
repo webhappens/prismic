@@ -6,10 +6,7 @@ use stdClass;
 use ArrayAccess;
 use Illuminate\Support\Collection;
 use WebHappens\Prismic\Fields\Date;
-use WebHappens\Prismic\HasHierarchy;
-use WebHappens\Prismic\HasAttributes;
 use WebHappens\Prismic\Fields\RichText;
-use WebHappens\Prismic\DocumentResolver;
 use Illuminate\Support\Traits\ForwardsCalls;
 
 abstract class Document implements ArrayAccess
@@ -67,6 +64,11 @@ abstract class Document implements ArrayAccess
         return null;
     }
 
+    public static function newHydratedInstance(stdClass $result) : Document
+    {
+        return static::make()->hydrate($result);
+    }
+
     public static function isSingle(): bool
     {
         return static::$isSingle;
@@ -100,11 +102,6 @@ abstract class Document implements ArrayAccess
                 }
             })
             ->filter();
-    }
-
-    public function newHydratedInstance(stdClass $result): Document
-    {
-        return static::make()->hydrate($result);
     }
 
     public function hydrate(stdClass $result)
