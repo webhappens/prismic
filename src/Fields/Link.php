@@ -2,6 +2,7 @@
 
 namespace WebHappens\Prismic\Fields;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\HtmlString;
 use Illuminate\Contracts\Support\Htmlable;
 use WebHappens\Prismic\Fields\LinkResolver;
@@ -16,6 +17,11 @@ abstract class Link implements Htmlable
     public static function resolve(...$parameters): ?Link
     {
         return resolve(LinkResolver::class)->resolve(...$parameters);
+    }
+
+    public static function resolveMany($items): Collection
+    {
+        return resolve(LinkResolver::class)->resolveMany($items);
     }
 
     public static function make(...$parameters): Link
