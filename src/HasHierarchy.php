@@ -14,8 +14,8 @@ trait HasHierarchy
     {
         foreach (static::$validParents as $validParent) {
             $parent = $validParent::all()->first(function ($document) {
-                return $document->getChildren()->first(function ($child) {
-                    return $child->id == $this->id;
+                return $document->getChildrenIds()->first(function ($id) {
+                    return $id == $this->id;
                 });
             });
 
@@ -45,7 +45,7 @@ trait HasHierarchy
         return $this->_ancestors;
     }
 
-    public function getChildren(): Collection
+    public function getChildrenIds(): Collection
     {
         return collect();
     }

@@ -43,6 +43,11 @@ abstract class Document implements ArrayAccess
         return resolve(DocumentResolver::class)->resolve(...$parameters);
     }
 
+    public static function resolveMany($items): Collection
+    {
+        return resolve(DocumentResolver::class)->resolveMany($items);
+    }
+
     public static function make(): Document
     {
         return new static;
