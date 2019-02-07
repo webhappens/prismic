@@ -118,12 +118,12 @@ class Query
             })
             ->toArray();
 
-        return $this->api()->query($predicates);
+        return $this->api()->query($predicates, $this->options);
     }
 
     public function options(array $options = [])
     {
-        array_merge($this->options, $options);
+        $this->options = array_merge($this->options, $options);
 
         return $this;
     }
