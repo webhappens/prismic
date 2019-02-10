@@ -11,8 +11,6 @@ class Traverser
     protected $id;
     protected $parentId;
     protected $childrenIds;
-    protected $ancestors;
-    protected $descendants;
     protected $parentMethods;
     protected $childrenMethods;
 
@@ -109,22 +107,20 @@ class Traverser
 
     protected function getAncestors(Document $document): Collection
     {
-        if ( ! $this->ancestors instanceof Collection) {
-            $this->ancestors = collect();
-        }
+        static $ancestors;
 
-        if ($document->getType() == 'homepage') {
-            dd('homepage');
+        if ( ! $ancestors instanceof Collection) {
+            $ancestors = collect();
         }
 
         $parentMethod = $this->getParentMethod($document);
 
         if ($parent = $document->{$parentMethod}()) {
-            $this->ancestors->prepend($parent);
+            $ancestors->prepend($parent);
             $this->getAncestors($parent);
         }
 
-        return $this->ancestors;
+        return $ancestors;
     }
 
     public function descendants(): Collection

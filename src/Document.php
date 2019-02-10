@@ -12,7 +12,8 @@ use Illuminate\Support\Traits\ForwardsCalls;
 abstract class Document implements ArrayAccess
 {
     use HasAttributes,
-        ForwardsCalls;
+        ForwardsCalls,
+        Traversable;
 
     protected static $type;
 
@@ -178,5 +179,10 @@ abstract class Document implements ArrayAccess
         }
 
         return $value;
+    }
+
+    protected function traverse()
+    {
+        return (new Traverser($this->id));
     }
 }
