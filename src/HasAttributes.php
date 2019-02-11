@@ -126,7 +126,7 @@ trait HasAttributes
 
     public function offsetUnset($offset)
     {
-        unset($this->attributes[$offset]);
+        unset($this->attributes[Str::snake($offset)]);
     }
 
     public function __isset($key)
