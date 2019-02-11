@@ -121,15 +121,12 @@ class Query
 
     public function getRaw(): stdClass
     {
-        return $this->api()->query(
-            $this->toPredicates(),
-            $this->options
-        );
+        return $this->api()->query($this->toPredicates(), $this->options);
     }
 
     public function options(array $options = [])
     {
-        array_merge($this->options, $options);
+        $this->options = array_merge($this->options, $options);
 
         return $this;
     }

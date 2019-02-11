@@ -6,17 +6,14 @@ use stdClass;
 use ArrayAccess;
 use Illuminate\Support\Collection;
 use WebHappens\Prismic\Fields\Date;
-use WebHappens\Prismic\HasHierarchy;
-use WebHappens\Prismic\HasAttributes;
 use WebHappens\Prismic\Fields\RichText;
-use WebHappens\Prismic\DocumentResolver;
 use Illuminate\Support\Traits\ForwardsCalls;
 
 abstract class Document implements ArrayAccess
 {
     use HasAttributes,
-        HasHierarchy,
-        ForwardsCalls;
+        ForwardsCalls,
+        Traversable;
 
     protected static $type;
 
@@ -46,6 +43,11 @@ abstract class Document implements ArrayAccess
         return resolve(DocumentResolver::class)->resolve(...$parameters);
     }
 
+    public static function resolveMany($items): Collection
+    {
+        return resolve(DocumentResolver::class)->resolveMany($items);
+    }
+
     public static function make(): Document
     {
         return new static;
@@ -65,6 +67,11 @@ abstract class Document implements ArrayAccess
         }
 
         return null;
+    }
+
+    public static function newHydratedInstance(stdClass $result) : Document
+    {
+        return static::make()->hydrate($result);
     }
 
     public static function isSingle(): bool
@@ -100,11 +107,6 @@ abstract class Document implements ArrayAccess
                 }
             })
             ->filter();
-    }
-
-    public function newHydratedInstance(stdClass $result): Document
-    {
-        return static::make()->hydrate($result);
     }
 
     public function hydrate(stdClass $result)
