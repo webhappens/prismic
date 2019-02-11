@@ -13,4 +13,9 @@ trait Traversable
     {
         return $this->traverse()->children();
     }
+
+    public function traverse()
+    {
+        return (new Traverser($this->id));
+    }
 }
