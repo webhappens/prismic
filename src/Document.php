@@ -181,7 +181,7 @@ abstract class Document implements ArrayAccess
         return $value;
     }
 
-    protected function traverse()
+    public function traverse()
     {
         return (new Traverser($this->id));
     }

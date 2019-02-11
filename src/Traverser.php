@@ -57,7 +57,15 @@ class Traverser
 
     public function parent(): ?Document
     {
-        return $this->parentId ? $this->getParentFromId() : $this->getParentFromChildren();
+        if ($this->parentId === false) {
+            return null;
+        }
+
+        if ($this->parentId) {
+            return $this->getParentFromId();
+        }
+
+        return $this->getParentFromChildren();
     }
 
     protected function getParentFromId(): ?Document
@@ -82,7 +90,15 @@ class Traverser
 
     public function children(): Collection
     {
-        return count($this->childrenIds) ? $this->getChildrenFromIds() : $this->getChildrenFromParent();
+        if ($this->childrenIds === false) {
+            return collect();
+        }
+
+        if (count($this->childrenIds)) {
+            return $this->getChildrenFromIds();
+        }
+
+        return $this->getChildrenFromParent();
     }
 
     protected function getChildrenFromIds(): Collection
@@ -94,7 +110,7 @@ class Traverser
 
     protected function getChildrenFromParent(): Collection
     {
-        //
+        // @todo
         return collect();
     }
 
@@ -105,10 +121,15 @@ class Traverser
         );
     }
 
-    protected function getAncestors(Document $document): Collection
+    public function ancestorsAndSelf() : Collection
     {
-        static $ancestors;
+        return $this->ancestors()->push(
+            $this->getDocuments()->get($this->id)
+        );
+    }
 
+    protected function getAncestors(Document $document, $ancestors = null): Collection
+    {
         if ( ! $ancestors instanceof Collection) {
             $ancestors = collect();
         }
@@ -117,7 +138,7 @@ class Traverser
 
         if ($parent = $document->{$parentMethod}()) {
             $ancestors->prepend($parent);
-            $this->getAncestors($parent);
+            $this->getAncestors($parent, $ancestors);
         }
 
         return $ancestors;
@@ -125,12 +146,50 @@ class Traverser
 
     public function descendants(): Collection
     {
-        //
+        return $this->getDescendants(
+            $this->getDocuments()->get($this->id)
+        );
+    }
+
+    public function descendantsAndSelf() : Collection
+    {
+        return $this->descendants()->prepend(
+            $this->getDocuments()->get($this->id)
+        );
+    }
+
+    protected function getDescendants(Document $document, $descendants = null) : Collection
+    {
+        if ( ! $descendants instanceof Collection) {
+            $descendants = collect();
+        }
+
+        $childrenMethod = $this->getChildrenMethod($document);
+
+        if ($children = $document->{$childrenMethod}()) {
+            foreach ($children as $child) {
+                $descendants->push($child);
+                $this->getDescendants($child, $descendants);
+            }
+        }
+
+        return $descendants;
     }
 
     public function siblings(): Collection
     {
-        //
+        return $this->siblingsAndSelf()->reject(function ($document) {
+            return $document->id == $this->id;
+        });
+    }
+
+    public function siblingsAndSelf(): Collection
+    {
+        if ( ! $parent = $this->parent()) {
+            return collect();
+        }
+
+        return $parent->children();
     }
 
     protected function getParentMethod(Document $document)
