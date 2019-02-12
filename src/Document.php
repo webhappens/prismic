@@ -19,7 +19,7 @@ abstract class Document implements ArrayAccess
 
     protected static $isSingle = false;
 
-    protected $globalFieldKeys = [
+    protected static $globalFieldKeys = [
         'id', 'uid', 'type', 'href', 'tags', 'first_publication_date',
         'last_publication_date', 'lang', 'alternate_languages',
     ];
@@ -58,6 +58,11 @@ abstract class Document implements ArrayAccess
         return static::$type;
     }
 
+    public static function getGlobalFieldKeys(): array
+    {
+        return static::$globalFieldKeys;
+    }
+
     public static function resolveClassFromType($type): ?string
     {
         foreach (Prismic::$documents as $document) {
@@ -69,9 +74,13 @@ abstract class Document implements ArrayAccess
         return null;
     }
 
-    public static function newHydratedInstance(stdClass $result) : Document
+    public static function newHydratedInstance(stdClass $result): ?Document
     {
-        return static::make()->hydrate($result);
+        if ( ! $document = Document::resolveClassFromType(data_get($result, 'type'))) {
+            return null;
+        }
+
+        return $document::make()->hydrate($result);
     }
 
     public static function isSingle(): bool
@@ -113,7 +122,7 @@ abstract class Document implements ArrayAccess
     {
         $attributes = [];
 
-        foreach ($this->globalFieldKeys as $key) {
+        foreach (static::getGlobalFieldKeys() as $key) {
             $attributes[$key] = $result->{$key};
         }
 
@@ -137,14 +146,7 @@ abstract class Document implements ArrayAccess
 
     public function newQuery(): Query
     {
-        return (new Query)
-            ->setDocument($this)
-            ->where('type', $this->getType());
-    }
-
-    public function getGlobalFieldKeys()
-    {
-        return $this->globalFieldKeys;
+        return (new Query)->type($this->getType());
     }
 
     public function getMaps()

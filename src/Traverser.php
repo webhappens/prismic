@@ -121,7 +121,7 @@ class Traverser
         );
     }
 
-    public function ancestorsAndSelf() : Collection
+    public function ancestorsAndSelf(): Collection
     {
         return $this->ancestors()->push(
             $this->getDocuments()->get($this->id)
@@ -151,14 +151,14 @@ class Traverser
         );
     }
 
-    public function descendantsAndSelf() : Collection
+    public function descendantsAndSelf(): Collection
     {
         return $this->descendants()->prepend(
             $this->getDocuments()->get($this->id)
         );
     }
 
-    protected function getDescendants(Document $document, $descendants = null) : Collection
+    protected function getDescendants(Document $document, $descendants = null): Collection
     {
         if ( ! $descendants instanceof Collection) {
             $descendants = collect();
@@ -204,14 +204,8 @@ class Traverser
 
     protected static function getDocuments(): Collection
     {
-        if (static::$documents) {
-            return static::$documents;
-        }
-
-        static::$documents = collect();
-
-        foreach (Prismic::$documents as $document) {
-            static::$documents = static::$documents->merge($document::all()->keyBy('id'));
+        if ( ! static::$documents) {
+            static::$documents = (new Query)->get()->keyBy('id');
         }
 
         return static::$documents;

@@ -5,18 +5,20 @@ namespace WebHappens\Prismic;
 use stdClass;
 use Prismic\Api;
 use Prismic\Predicates;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Illuminate\Support\Collection;
 
 class Query
 {
-    protected $document;
+    protected $type;
     protected $wheres = [];
     protected $options = [];
 
-    public function setDocument(Document $document)
+    public function type($type): Query
     {
-        $this->document = $document;
+        $this->type = $type;
+        $this->where('type', $type);
 
         return $this;
     }
@@ -44,17 +46,19 @@ class Query
         return $this->first();
     }
 
-    public function where($field, $predicate = null, $value = null)
+    public function where($field, $predicate = null, $value = null): Query
     {
         if (func_num_args() === 2) {
             $value = $predicate;
             $predicate = 'at';
         }
 
-        if (in_array($field, $this->document->getGlobalFieldKeys())) {
+        if (in_array($field, Document::getGlobalFieldKeys())) {
             $field = 'document.' . $field;
+        } elseif ($this->type && ! Str::contains($field, '.')) {
+            $field = 'my.' . $this->type . '.' . $field;
         } else {
-            $field = 'my.' . $this->document->getType() . '.' . $field;
+            $field = 'my.' . $field;
         }
 
         if ( ! method_exists(Predicates::class, $predicate)) {
@@ -93,7 +97,7 @@ class Query
 
         $callback(
             collect($response->results)->map(function ($result) {
-                return $this->document->newHydratedInstance($result);
+                return Document::newHydratedInstance($result);
             })
         );
 
@@ -102,7 +106,7 @@ class Query
 
             $callback(
                 collect($response->results)->map(function ($result) {
-                    return $this->document->newHydratedInstance($result);
+                    return Document::newHydratedInstance($result);
                 })
             );
         }
@@ -124,7 +128,7 @@ class Query
         return $this->api()->query($this->toPredicates(), $this->options);
     }
 
-    public function options(array $options = [])
+    public function options(array $options = []): Query
     {
         $this->options = array_merge($this->options, $options);
 

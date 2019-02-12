@@ -6,7 +6,7 @@ use WebHappens\Prismic\Document;
 
 class DocumentStub extends Document
 {
-    protected static $type = 'example_document';
+    protected static $type = 'example';
 
     protected $maps = [
         'uri' => 'url',

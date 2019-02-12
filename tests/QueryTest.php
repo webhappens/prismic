@@ -6,6 +6,7 @@ use stdClass;
 use Prismic\Api;
 use Mockery as m;
 use Prismic\SimplePredicate;
+use InvalidArgumentException;
 use WebHappens\Prismic\Query;
 use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
@@ -13,114 +14,143 @@ use WebHappens\Prismic\Tests\Stubs\DocumentStub;
 
 class QueryTest extends TestCase
 {
-    public function testFind()
+    public function test_type_can_chain()
     {
-        $this->assertNull(DocumentStub::find(null));
-
-        $document = DocumentStub::make();
-        $queryMock = m::mock(Query::class . '[first,where]');
-        $queryMock->setDocument($document);
-        $queryMock->shouldReceive('where')->once()->with('id', 'foo')->andReturn($queryMock);
-        $queryMock->shouldReceive('first')->once()->andReturn($document);
-        $result = $queryMock->find('foo');
-        $this->assertInstanceOf(Document::class, $result);
+        $query = (new Query)->type('example');
+        $this->assertInstanceOf(Query::class, $query);
     }
 
-    public function testFindMany()
+    public function test_find()
     {
-        $this->assertInstanceOf(Collection::class, DocumentStub::findMany([]));
+        $query = m::mock(Query::class . '[first,where]');
+        $this->assertNull($query->find(null));
+        $query->shouldReceive('where')->once()->with('id', 'foo')->andReturn($query);
+        $query->shouldReceive('first')->once()->andReturn(DocumentStub::make());
+        $result = $query->find('foo');
+        $this->assertInstanceOf(DocumentStub::class, $result);
+    }
 
-        $document = DocumentStub::make();
-        $queryMock = m::mock(Query::class . '[get,where]');
-        $queryMock->setDocument($document);
-        $queryMock->shouldReceive('where')->once()->with('id', 'in', ['foo1', 'foo2'])->andReturn($queryMock);
-        $queryMock->shouldReceive('get')->once()->andReturn(collect());
-        $results = $queryMock->findMany(['foo1', 'foo2']);
+    public function test_find_many()
+    {
+        $query = m::mock(Query::class . '[get,where]');
+        $this->assertInstanceOf(Collection::class, $query->findMany([]));
+        $query->shouldReceive('where')->once()->with('id', 'in', ['foo1', 'foo2'])->andReturn($query);
+        $query->shouldReceive('get')->once()->andReturn(collect());
+        $results = $query->findMany(['foo1', 'foo2']);
         $this->assertInstanceOf(Collection::class, $results);
     }
 
-    public function testSingle()
+    public function test_single()
     {
-        $document = DocumentStub::make();
-        $queryMock = m::mock(Query::class . '[first]');
-        $queryMock->setDocument($document);
-        $queryMock->shouldReceive('first')->once()->andReturn($document);
-        $result = $queryMock->single();
-        $this->assertInstanceOf(Document::class, $result);
+        $query = m::mock(Query::class . '[first]');
+        $query->shouldReceive('first')->once()->andReturn(DocumentStub::make());
+        $result = $query->single();
+        $this->assertInstanceOf(DocumentStub::class, $result);
     }
 
-    public function testFirst()
+    public function test_where_can_chain()
     {
-        $document = DocumentStub::make();
-        $queryMock = m::mock(Query::class . '[get]');
-        $queryMock->setDocument($document);
-        $collectionMock = m::mock(Collection::class . '[first]');
-        $queryMock->shouldReceive('get')->once()->andReturn($collectionMock);
-        $collectionMock->shouldReceive('first');
-        $result = $queryMock->first();
+        $query = (new Query)->where('id', '1');
+        $this->assertInstanceOf(Query::class, $query);
     }
 
-    public function testWhereConvertsToPredicates()
+    public function test_where_with_global_field()
     {
-        $document = DocumentStub::make();
-
         $predicates = (new Query)
-            ->setDocument($document)
             ->where('id', '1')
-            ->where('name', 'in', ['ben', 'sam'])
             ->toPredicates();
 
-        $this->assertCount(2, $predicates);
-        $this->assertInstanceOf(SimplePredicate::class, $predicates[0]);
+        $this->assertCount(1, $predicates);
         $this->assertEquals('[:d = at(document.id, "1")]', $predicates[0]->q());
-        $this->assertInstanceOf(SimplePredicate::class, $predicates[1]);
-        $this->assertEquals('[:d = in(my.example_document.name, ["ben", "sam"])]', $predicates[1]->q());
     }
 
-    public function testChunk()
+    public function test_where_without_type()
     {
-        $document = DocumentStub::make();
+        $predicates = (new Query)
+            ->where('example.name', 'in', ['ben', 'sam'])
+            ->toPredicates();
 
-        $result = (object) array_fill_keys($document->getGlobalFieldKeys(), 'foo');
-        $result->data = (object) ['field' => 'bar'];
+        $this->assertCount(1, $predicates);
+        $this->assertEquals('[:d = in(my.example.name, ["ben", "sam"])]', $predicates[0]->q());
+    }
 
-        $raw = (object) [
+    public function test_where_with_type()
+    {
+        $predicates = (new Query)
+            ->type('example')
+            ->where('name', 'in', ['ben', 'sam'])
+            ->where('example.foo', 'bar')
+            ->toPredicates();
+
+        $this->assertCount(3, $predicates);
+        $this->assertEquals('[:d = at(document.type, "example")]', $predicates[0]->q());
+        $this->assertEquals('[:d = in(my.example.name, ["ben", "sam"])]', $predicates[1]->q());
+        $this->assertEquals('[:d = at(my.example.foo, "bar")]', $predicates[2]->q());
+    }
+
+    public function test_first()
+    {
+        $query = m::mock(Query::class . '[get]');
+        $collection = m::mock(Collection::class . '[first]');
+        $query->shouldReceive('get')->once()->andReturn($collection);
+        $collection->shouldReceive('first');
+        $query->first();
+    }
+
+    public function test_chunk()
+    {
+        $responseStub = (object) [
             'total_pages' => 3,
-            'results' => [$result, $result],
+            'results' => [],
         ];
 
-        $queryMock = m::mock(Query::class . '[options,getRaw]');
-        $queryMock->setDocument($document);
-        $queryMock->shouldReceive('options')->times(3)->andReturn($queryMock);
-        $queryMock->shouldReceive('getRaw')->times(3)->andReturn($raw, $raw, $raw);
+        $query = m::mock(Query::class . '[options,getRaw]');
+        $query->shouldReceive('options')->times(3)->andReturn($query);
+        $query->shouldReceive('getRaw')->times(3)->andReturn($responseStub);
 
         $count = 0;
 
-        $queryMock->chunk(2, function ($chunk) use (&$count) {
-            foreach ($chunk as $document) {
-                $count++;
-                $this->assertInstanceOf(Document::class, $document);
-            }
+        $query->chunk(100, function ($chunk) use (&$count) {
+            $count++;
+            $this->assertInstanceOf(Collection::class, $chunk);
         });
 
-        $this->assertEquals(6, $count);
+        $this->assertEquals(3, $count);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $query->chunk(101, function () {
+            // do nothing
+        });
     }
 
-    public function testGetRaw()
+    public function test_to_predicates()
     {
-        $queryMock = m::mock(Query::class . '[api]');
-        $apiMock = m::mock(Api::class);
-        $queryMock->shouldReceive('api')->once()->andReturn($apiMock);
-        $apiMock->shouldReceive('query')->once();
-        $queryMock->getRaw();
+        $predicates = (new Query)
+            ->where('id', '1')
+            ->where('example.name', 'in', ['ben', 'sam'])
+            ->toPredicates();
+
+        $this->assertInternalType('array', $predicates);
+        $this->assertCount(2, $predicates);
+        $this->assertContainsOnlyInstancesOf(SimplePredicate::class, $predicates);
     }
 
-    public function testOptions()
+    public function test_get_raw()
+    {
+        $query = m::mock(Query::class . '[api]');
+        $api = m::mock(Api::class);
+        $query->shouldReceive('api')->once()->andReturn($api);
+        $api->shouldReceive('query')->once();
+        $query->getRaw();
+    }
+
+    public function test_options_can_chain()
     {
         $this->assertInstanceOf(Query::class, (new Query)->options([]));
     }
 
-    public function testApi()
+    public function test_api_returns_prismic_api_instance()
     {
         $this->swap(Api::class, 'foobar');
         $this->assertEquals('foobar', (new Query)->api());

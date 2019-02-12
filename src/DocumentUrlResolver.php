@@ -8,12 +8,10 @@ class DocumentUrlResolver extends LinkResolver
 {
     public function resolve($data): ?string
     {
-        if ($document = Document::resolveClassFromType(data_get($data, 'type'))) {
-            $document = $document::newHydratedInstance($data);
+        $document = Document::newHydratedInstance($data);
 
-            if ($document->isLinkable()) {
-                return $document->url;
-            }
+        if ($document && $document->isLinkable()) {
+            return $document->url;
         }
 
         return url('/');
