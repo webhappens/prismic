@@ -2,13 +2,12 @@
 
 namespace WebHappens\Prismic\Tests;
 
-use stdClass;
 use Prismic\Api;
 use Mockery as m;
+use Hamcrest\Matchers;
 use Prismic\SimplePredicate;
 use InvalidArgumentException;
 use WebHappens\Prismic\Query;
-use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
 use WebHappens\Prismic\Tests\Stubs\DocumentStub;
 
@@ -24,7 +23,7 @@ class QueryTest extends TestCase
     {
         $query = m::mock(Query::class . '[first,where]');
         $this->assertNull($query->find(null));
-        $query->shouldReceive('where')->once()->with('id', 'foo')->andReturn($query);
+        $query->shouldReceive('where')->once()->with('id', 'foo')->andReturnSelf();
         $query->shouldReceive('first')->once()->andReturn(DocumentStub::make());
         $result = $query->find('foo');
         $this->assertInstanceOf(DocumentStub::class, $result);
@@ -34,7 +33,7 @@ class QueryTest extends TestCase
     {
         $query = m::mock(Query::class . '[get,where]');
         $this->assertInstanceOf(Collection::class, $query->findMany([]));
-        $query->shouldReceive('where')->once()->with('id', 'in', ['foo1', 'foo2'])->andReturn($query);
+        $query->shouldReceive('where')->once()->with('id', 'in', ['foo1', 'foo2'])->andReturnSelf();
         $query->shouldReceive('get')->once()->andReturn(collect());
         $results = $query->findMany(['foo1', 'foo2']);
         $this->assertInstanceOf(Collection::class, $results);
@@ -88,6 +87,13 @@ class QueryTest extends TestCase
         $this->assertEquals('[:d = at(my.example.foo, "bar")]', $predicates[2]->q());
     }
 
+    public function test_get()
+    {
+        $query = m::mock(Query::class . '[chunk]');
+        $query->shouldReceive('chunk')->once();
+        $this->assertInstanceOf(Collection::class, $query->get());
+    }
+
     public function test_first()
     {
         $query = m::mock(Query::class . '[get]');
@@ -105,7 +111,7 @@ class QueryTest extends TestCase
         ];
 
         $query = m::mock(Query::class . '[options,getRaw]');
-        $query->shouldReceive('options')->times(3)->andReturn($query);
+        $query->shouldReceive('options')->times(3)->andReturnSelf();
         $query->shouldReceive('getRaw')->times(3)->andReturn($responseStub);
 
         $count = 0;
@@ -140,8 +146,10 @@ class QueryTest extends TestCase
     {
         $query = m::mock(Query::class . '[api]');
         $api = m::mock(Api::class);
+        $query->options(['foo' => 'bar']);
+        $query->where('id', '1')->where('name', 'in', ['ben', 'sam']);
         $query->shouldReceive('api')->once()->andReturn($api);
-        $api->shouldReceive('query')->once();
+        $api->shouldReceive('query')->once()->with($query->toPredicates(), ['foo' => 'bar']);
         $query->getRaw();
     }
 

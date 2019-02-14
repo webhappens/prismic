@@ -32,13 +32,4 @@ class Prismic
 
         return redirect($url);
     }
-
-    public static function __callStatic($method, $parameters)
-    {
-        if ( ! property_exists(get_called_class(), $method)) {
-            throw new BadMethodCallException("Method {$method} does not exist.");
-        }
-
-        return static::${$method};
-    }
 }

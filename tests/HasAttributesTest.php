@@ -5,9 +5,9 @@ namespace WebHappens\Prismic\Tests;
 use Carbon\Carbon;
 use WebHappens\Prismic\Tests\Stubs\ModelStub;
 
-class AttributesTest extends TestCase
+class HasAttributesTest extends TestCase
 {
-    public function testAttributeManipulation()
+    public function test_attribute_manipulation()
     {
         $model = new ModelStub;
         $model->foo_bar = 'foobar';
@@ -20,7 +20,7 @@ class AttributesTest extends TestCase
         $this->assertEquals('foobar', $model->fooBar);
     }
 
-    public function testIssetAndUnset()
+    public function test_isset_and_unset()
     {
         $model = new ModelStub;
         $model->foo_bar = 'foobar';
@@ -39,7 +39,7 @@ class AttributesTest extends TestCase
         $this->assertFalse(isset($model->fooBar));
     }
 
-    public function testAccessorsAndMutators()
+    public function test_accessors_and_mutators()
     {
         $model = new ModelStub;
         $model->first_name = 'ben';
@@ -47,7 +47,7 @@ class AttributesTest extends TestCase
         $this->assertEquals('Ben Gurney', $model->name);
     }
 
-    public function testArrayAccess()
+    public function test_array_access()
     {
         $model = new ModelStub;
         $model->foo_bar = 'foobar';
@@ -60,7 +60,7 @@ class AttributesTest extends TestCase
         $this->assertEquals('foobar', $model['fooBar']);
     }
 
-    public function testAttributeCast()
+    public function test_attribute_cast()
     {
         $model = new ModelStub;
         $model->last_updated = '2019-01-01';
