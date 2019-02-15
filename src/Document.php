@@ -123,7 +123,7 @@ abstract class Document implements ArrayAccess
         $attributes = [];
 
         foreach (static::getGlobalFieldKeys() as $key) {
-            $attributes[$key] = $result->{$key};
+            $attributes[$key] = data_get($result, $key);
         }
 
         foreach ($result->data as $key => $value) {

@@ -18,8 +18,9 @@ class PrismicTest extends TestCase
             'App\Collection',
         ];
 
-        (new Prismic)->documents($documents);
+        Prismic::documents($documents);
         $this->assertArraySubset($documents, Prismic::$documents);
+        Prismic::$documents = [];
     }
 
     public function test_slices()
@@ -29,8 +30,9 @@ class PrismicTest extends TestCase
             'App\Slices\Table',
         ];
 
-        (new Prismic)->slices($slices);
+        Prismic::slices($slices);
         $this->assertArraySubset($slices, Prismic::$slices);
+        Prismic::$slices = [];
     }
 
     public function test_can_chain_from_static()
@@ -43,7 +45,7 @@ class PrismicTest extends TestCase
     {
         $token = 'my-token';
         $documentResolver = Matchers::equalTo(new DocumentUrlResolver);
-        $url = 'https://localhost';
+        $url = 'https://example.org';
 
         $prismic = m::mock(Prismic::class);
         $api = m::mock(Api::class);

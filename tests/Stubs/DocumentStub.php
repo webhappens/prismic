@@ -11,4 +11,8 @@ class DocumentStub extends Document
     protected $maps = [
         'uri' => 'url',
     ];
+
+    protected $casts = [
+        'url' => 'url',
+    ];
 }
