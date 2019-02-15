@@ -96,9 +96,9 @@ class QueryTest extends TestCase
 
     public function test_first()
     {
-        $query = m::mock(Query::class . '[get]');
+        $query = m::mock(Query::class . '[getRaw]');
         $collection = m::mock(Collection::class . '[first]');
-        $query->shouldReceive('get')->once()->andReturn($collection);
+        $query->shouldReceive('getRaw')->once()->andReturn((object) ['results' => []]);
         $collection->shouldReceive('first');
         $query->first();
     }
@@ -115,17 +115,19 @@ class QueryTest extends TestCase
         $query->shouldReceive('getRaw')->times(3)->andReturn($responseStub);
 
         $count = 0;
-
         $query->chunk(100, function ($chunk) use (&$count) {
             $count++;
             $this->assertInstanceOf(Collection::class, $chunk);
         });
 
         $this->assertEquals(3, $count);
+    }
 
+    public function test_chunk_exceeding_chunk_limit()
+    {
         $this->expectException(InvalidArgumentException::class);
 
-        $query->chunk(101, function () {
+        (new Query)->chunk(101, function () {
             // do nothing
         });
     }

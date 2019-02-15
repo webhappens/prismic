@@ -14,6 +14,58 @@ class Query
     protected $type;
     protected $wheres = [];
     protected $options = [];
+    protected $cacheQueryResults = false;
+    protected static $cachedRecords = [];
+
+    public static function eagerLoadAll(): Query
+    {
+        (new static)->cache()->get();
+
+        return new static;
+    }
+
+    public static function setRecordCache(Collection $records): Collection
+    {
+        return static::$cachedRecords = $records->keyBy('id');
+    }
+
+    public static function clearRecordCache(): Collection
+    {
+        return static::$cachedRecords = collect();
+    }
+
+    public static function addToRecordCache(Collection $records): Collection
+    {
+        $records = $records->keyBy('id');
+
+        static::setRecordCache(static::recordCache()->merge($records));
+
+        return $records;
+    }
+
+    public static function recordCache()
+    {
+        return collect(static::$cachedRecords);
+    }
+
+    public function cache(): Query
+    {
+        $this->cacheQueryResults = true;
+
+        return $this;
+    }
+
+    public function dontCache(): Query
+    {
+        $this->cacheQueryResults = false;
+
+        return $this;
+    }
+
+    public function shouldCache(): bool
+    {
+        return (bool) $this->cacheQueryResults;
+    }
 
     public function type($type): Query
     {
@@ -29,6 +81,10 @@ class Query
             return null;
         }
 
+        if (static::recordCache()->has($id)) {
+            return static::recordCache()->get($id);
+        }
+
         return $this->where('id', $id)->first();
     }
 
@@ -36,6 +92,10 @@ class Query
     {
         if (empty($ids)) {
             return collect();
+        }
+
+        if (($results = static::recordCache()->only($ids)) && count($ids) === $results->count()) {
+            return $results;
         }
 
         return $this->where('id', 'in', $ids)->get();
@@ -83,33 +143,27 @@ class Query
 
     public function first(): ?Document
     {
-        return $this->get()->first();
+        $record = $this->processResults($this->getRaw()->results)->first();
+
+        return $this->shouldCache() ? static::addToRecordCache(collect([$record])) : $record;
     }
 
     public function chunk($pageSize, callable $callback)
     {
         if ($pageSize > 100) {
-            // This limit is set by the Prismic API
-            throw new InvalidArgumentException('The maximum chunk limit is 100');
+            throw new InvalidArgumentException('The maximum chunk limit allowed by Prismic is 100');
         }
 
-        $response = $this->options(compact('pageSize'))->getRaw();
-
-        $callback(
-            collect($response->results)->map(function ($result) {
-                return Document::newHydratedInstance($result);
-            })
-        );
-
-        for ($page = 2; $page <= $response->total_pages; $page++) {
+        $page = 1;
+        do {
             $response = $this->options(compact('pageSize', 'page'))->getRaw();
 
+            $results = $this->processResults($response->results);
+
             $callback(
-                collect($response->results)->map(function ($result) {
-                    return Document::newHydratedInstance($result);
-                })
+                $this->shouldCache() ? static::addToRecordCache($results) : $results
             );
-        }
+        } while ($page++ < $response->total_pages);
     }
 
     public function toPredicates(): array
@@ -138,5 +192,12 @@ class Query
     public function api()
     {
         return resolve(Api::class);
+    }
+
+    protected function processResults($results): Collection
+    {
+        return collect($results)->map(function ($result) {
+            return Document::newHydratedInstance($result);
+        });
     }
 }
