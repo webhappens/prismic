@@ -8,49 +8,66 @@ use Hamcrest\Matchers;
 use Prismic\SimplePredicate;
 use InvalidArgumentException;
 use WebHappens\Prismic\Query;
+use WebHappens\Prismic\Prismic;
 use Illuminate\Support\Collection;
-use WebHappens\Prismic\Tests\Stubs\DocumentStub;
+use WebHappens\Prismic\Tests\Stubs\DocumentAStub;
+use WebHappens\Prismic\Tests\Stubs\DocumentBStub;
 
 class QueryTest extends TestCase
 {
     public function test_type_can_chain()
     {
-        $query = (new Query)->type('example');
-        $this->assertInstanceOf(Query::class, $query);
+        $this->assertInstanceOf(Query::class, (new Query)->type('document_a'));
     }
 
     public function test_find()
     {
-        $query = m::mock(Query::class . '[first,where]');
-        $this->assertNull($query->find(null));
-        $query->shouldReceive('where')->once()->with('id', 'foo')->andReturnSelf();
-        $query->shouldReceive('first')->once()->andReturn(DocumentStub::make());
-        $result = $query->find('foo');
-        $this->assertInstanceOf(DocumentStub::class, $result);
+        $this->assertNull((new Query())->find(null));
+
+        $expectedPredicates = (new Query)->where('id', 1)->toPredicates();
+        $query = $this->mockApiQuery($expectedPredicates, $this->mockRawStubSingle());
+
+        Prismic::documents([DocumentAStub::class]);
+        $result = $query->find(1);
+        $this->assertInstanceOf(DocumentAStub::class, $result);
+        Prismic::$documents = [];
     }
 
     public function test_find_many()
     {
-        $query = m::mock(Query::class . '[get,where]');
-        $this->assertInstanceOf(Collection::class, $query->findMany([]));
-        $query->shouldReceive('where')->once()->with('id', 'in', ['foo1', 'foo2'])->andReturnSelf();
-        $query->shouldReceive('get')->once()->andReturn(collect());
-        $results = $query->findMany(['foo1', 'foo2']);
+        $results = (new Query())->findMany([]);
         $this->assertInstanceOf(Collection::class, $results);
+        $this->assertEmpty($results);
+
+        $expectedPredicates = (new Query)->where('id', 'in', [1, 2, 3])->toPredicates();
+        $query = $this->mockApiQuery($expectedPredicates, $this->mockRawStubMany());
+
+        Prismic::documents([DocumentAStub::class, DocumentBStub::class]);
+        $results = $query->findMany([1, 2, 3]);
+        $this->assertInstanceOf(Collection::class, $results);
+        $this->assertInstanceOf(DocumentAStub::class, $results[0]);
+        $this->assertInstanceOf(DocumentAStub::class, $results[1]);
+        $this->assertInstanceOf(DocumentBStub::class, $results[2]);
+        Prismic::$documents = [];
     }
 
     public function test_single()
     {
-        $query = m::mock(Query::class . '[first]');
-        $query->shouldReceive('first')->once()->andReturn(DocumentStub::make());
+        $this->assertNull((new Query)->single());
+
+        $expectedPredicates = (new Query)->where('type', 'document_a')->toPredicates();
+        $query = $this->mockApiQuery($expectedPredicates, $this->mockRawStubSingle());
+        $query->type('document_a');
+
+        Prismic::documents([DocumentAStub::class]);
         $result = $query->single();
-        $this->assertInstanceOf(DocumentStub::class, $result);
+        $this->assertInstanceOf(DocumentAStub::class, $result);
+        Prismic::$documents = [];
     }
 
     public function test_where_can_chain()
     {
-        $query = (new Query)->where('id', '1');
-        $this->assertInstanceOf(Query::class, $query);
+        $this->assertInstanceOf(Query::class, (new Query)->where('id', '1'));
     }
 
     public function test_where_with_global_field()
@@ -89,18 +106,27 @@ class QueryTest extends TestCase
 
     public function test_get()
     {
-        $query = m::mock(Query::class . '[chunk]');
-        $query->shouldReceive('chunk')->once();
-        $this->assertInstanceOf(Collection::class, $query->get());
+        $expectedPredicates = (new Query)->toPredicates();
+        $query = $this->mockApiQuery($expectedPredicates, $this->mockRawStubMany());
+
+        Prismic::documents([DocumentAStub::class, DocumentBStub::class]);
+        $results = $query->get();
+        $this->assertInstanceOf(Collection::class, $results);
+        $this->assertInstanceOf(DocumentAStub::class, $results[0]);
+        $this->assertInstanceOf(DocumentAStub::class, $results[1]);
+        $this->assertInstanceOf(DocumentBStub::class, $results[2]);
+        Prismic::$documents = [];
     }
 
     public function test_first()
     {
-        $query = m::mock(Query::class . '[get]');
-        $collection = m::mock(Collection::class . '[first]');
-        $query->shouldReceive('get')->once()->andReturn($collection);
-        $collection->shouldReceive('first');
-        $query->first();
+        $expectedPredicates = (new Query)->toPredicates();
+        $query = $this->mockApiQuery($expectedPredicates, $this->mockRawStubMany());
+
+        Prismic::documents([DocumentAStub::class]);
+        $result = $query->first();
+        $this->assertInstanceOf(DocumentAStub::class, $result);
+        Prismic::$documents = [];
     }
 
     public function test_chunk()
@@ -162,5 +188,38 @@ class QueryTest extends TestCase
     {
         $this->swap(Api::class, 'foobar');
         $this->assertEquals('foobar', (new Query)->api());
+    }
+
+    protected function mockApiQuery($expectedPredicates, $return)
+    {
+        $api = m::mock(Api::class);
+        $api->shouldReceive('query')->with($expectedPredicates, ['pageSize' => 100])->andReturn($return);
+
+        $query = m::mock(Query::class . '[api]');
+        $query->shouldReceive('api')->once()->andReturn($api);
+
+        return $query;
+    }
+
+    protected function mockRawStubSingle()
+    {
+        return (object)[
+            'total_pages' => 1,
+            'results' => [
+                (object)['id' => '1', 'type' => 'document_a', 'data' => []],
+            ],
+        ];
+    }
+
+    protected function mockRawStubMany()
+    {
+        return (object)[
+            'total_pages' => 1,
+            'results' => [
+                (object)['id' => '1', 'type' => 'document_a', 'data' => []],
+                (object)['id' => '2', 'type' => 'document_a', 'data' => []],
+                (object)['id' => '3', 'type' => 'document_b', 'data' => []],
+            ],
+        ];
     }
 }

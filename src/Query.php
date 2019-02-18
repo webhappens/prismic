@@ -43,6 +43,10 @@ class Query
 
     public function single(): ?Document
     {
+        if ( ! $this->type) {
+            return null;
+        }
+
         return $this->first();
     }
 

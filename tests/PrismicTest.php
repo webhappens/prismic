@@ -47,13 +47,13 @@ class PrismicTest extends TestCase
         $documentResolver = Matchers::equalTo(new DocumentUrlResolver);
         $url = 'https://example.org';
 
-        $prismic = m::mock(Prismic::class);
         $api = m::mock(Api::class);
         $api->shouldReceive('previewSession')
             ->once()
             ->with($token, $documentResolver, '/')
             ->andReturn($url);
         $this->swap(Api::class, $api);
+
         $redirect = Prismic::preview($token);
         $this->assertInstanceOf(RedirectResponse::class, $redirect);
         $this->assertEquals($url, $redirect->getTargetUrl());

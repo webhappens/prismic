@@ -17,8 +17,6 @@ abstract class Document implements ArrayAccess
 
     protected static $type;
 
-    protected static $isSingle = false;
-
     protected static $globalFieldKeys = [
         'id', 'uid', 'type', 'href', 'tags', 'first_publication_date',
         'last_publication_date', 'lang', 'alternate_languages',
@@ -81,11 +79,6 @@ abstract class Document implements ArrayAccess
         }
 
         return $document::make()->hydrate($result);
-    }
-
-    public static function isSingle(): bool
-    {
-        return static::$isSingle;
     }
 
     public static function all(): Collection
