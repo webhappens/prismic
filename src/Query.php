@@ -15,11 +15,15 @@ class Query
     protected $wheres = [];
     protected $options = [];
     protected $cacheQueryResults = false;
+    protected static $allRecordsCached = false;
     protected static $cachedRecords = [];
 
     public static function eagerLoadAll(): Query
     {
-        (new static)->cache()->get();
+        if ( ! static::$allRecordsCached) {
+            (new static)->cache()->get();
+            static::$allRecordsCached = true;
+        }
 
         return new static;
     }
