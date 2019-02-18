@@ -98,7 +98,7 @@ class Query
             return collect();
         }
 
-        if (($results = static::recordCache()->only($ids)) && count($ids) === $results->count()) {
+        if (($results = static::recordCache()->only($ids)->values()) && count($ids) === $results->count()) {
             return $results;
         }
 
