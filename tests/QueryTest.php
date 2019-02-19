@@ -17,6 +17,11 @@ use WebHappens\Prismic\Tests\Stubs\DocumentBStub;
 
 class QueryTest extends TestCase
 {
+    public function test_make()
+    {
+        $this->assertInstanceOf(Query::class, Query::make());
+    }
+
     public function test_type_can_chain()
     {
         $this->assertInstanceOf(Query::class, Query::make()->type('document_a'));
