@@ -19,13 +19,6 @@ abstract class Link implements Htmlable
         return resolve(LinkResolver::class)->resolve(...$parameters);
     }
 
-    public static function resolveMany($items): Collection
-    {
-        return collect($items)->map(function($item) {
-            return $this->resolve($item);
-        });
-    }
-
     public static function make(...$parameters): Link
     {
         return new static(...$parameters);
