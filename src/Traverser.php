@@ -6,17 +6,18 @@ use Illuminate\Support\Collection;
 
 class Traverser
 {
-    protected static $documents;
-
-    protected $id;
+    protected $query;
+    protected $document;
     protected $parentId;
     protected $childrenIds;
     protected $parentMethods;
     protected $childrenMethods;
 
-    public function __construct($id)
+    public function __construct($document)
     {
-        $this->id = $id;
+        $this->document = $document;
+
+        $this->query = Query::eagerLoadAll();
 
         $this->parentMethods = collect(
             array_fill_keys(Prismic::$documents, 'parent')
@@ -70,19 +71,19 @@ class Traverser
 
     protected function getParentFromId(): ?Document
     {
-        return static::getDocuments()->get($this->parentId);
+        return $this->query->find($this->parentId);
     }
 
     protected function getParentFromChildren(): ?Document
     {
-        return static::getDocuments()->first(function ($document) {
+        return $this->query->documentCache()->first(function ($document) {
             $childrenMethod = $this->getChildrenMethod($document);
 
             if (method_exists($document, $childrenMethod)) {
                 return $document->{$childrenMethod}()
                     ->filter()
                     ->first(function ($document) {
-                        return $document->id == $this->id;
+                        return $document->id == $this->document->id;
                     });
             }
         });
@@ -103,8 +104,8 @@ class Traverser
 
     protected function getChildrenFromIds(): Collection
     {
-        return $this->childrenIds->map(function ($id) {
-            return static::getDocuments()->get($id);
+        return $this->childrenIds->map(function($id) {
+            return $this->query->find($id);
         });
     }
 
@@ -116,29 +117,26 @@ class Traverser
 
     public function ancestors(): Collection
     {
-        return $this->getAncestors(
-            $this->getDocuments()->get($this->id)
-        );
+        return $this->getAncestors()->map(function($id) {
+            return $this->query->find($id);
+        });
     }
 
     public function ancestorsAndSelf(): Collection
     {
-        return $this->ancestors()->push(
-            $this->getDocuments()->get($this->id)
-        );
+        return $this->ancestors()->push($this->document);
     }
 
-    protected function getAncestors(Document $document, $ancestors = null): Collection
+    protected function getAncestors(): Collection
     {
-        if ( ! $ancestors instanceof Collection) {
-            $ancestors = collect();
-        }
+        $ancestors = collect();
 
-        $parentMethod = $this->getParentMethod($document);
+        $parentMethod = $this->getParentMethod($this->document);
 
-        if ($parent = $document->{$parentMethod}()) {
-            $ancestors->prepend($parent);
-            $this->getAncestors($parent, $ancestors);
+        if ($parent = $this->document->{$parentMethod}()) {
+            $ancestors->prepend($parent->id);
+
+            $ancestors = (new static($parent))->getAncestors()->merge($ancestors);
         }
 
         return $ancestors;
@@ -146,30 +144,27 @@ class Traverser
 
     public function descendants(): Collection
     {
-        return $this->getDescendants(
-            $this->getDocuments()->get($this->id)
-        );
+        return $this->getDescendants()->map(function($id) {
+            return $this->query->find($id);
+        });
     }
 
     public function descendantsAndSelf(): Collection
     {
-        return $this->descendants()->prepend(
-            $this->getDocuments()->get($this->id)
-        );
+        return $this->descendants()->prepend($this->document);
     }
 
-    protected function getDescendants(Document $document, $descendants = null): Collection
+    protected function getDescendants(): Collection
     {
-        if ( ! $descendants instanceof Collection) {
-            $descendants = collect();
-        }
+        $descendants = collect();
 
-        $childrenMethod = $this->getChildrenMethod($document);
+        $childrenMethod = $this->getChildrenMethod($this->document);
 
-        if ($children = $document->{$childrenMethod}()) {
+        if ($children = $this->document->{$childrenMethod}()) {
             foreach ($children as $child) {
-                $descendants->push($child);
-                $this->getDescendants($child, $descendants);
+                $descendants = $descendants
+                    ->push($child->id)
+                    ->merge($child->traverse()->getDescendants());
             }
         }
 
@@ -179,7 +174,7 @@ class Traverser
     public function siblings(): Collection
     {
         return $this->siblingsAndSelf()->reject(function ($document) {
-            return $document->id == $this->id;
+            return $document->id == $this->document->id;
         });
     }
 
@@ -200,14 +195,5 @@ class Traverser
     protected function getChildrenMethod(Document $document)
     {
         return $this->childrenMethods->get(get_class($document));
-    }
-
-    protected static function getDocuments(): Collection
-    {
-        if ( ! static::$documents) {
-            static::$documents = (new Query)->get()->keyBy('id');
-        }
-
-        return static::$documents;
     }
 }
