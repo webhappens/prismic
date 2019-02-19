@@ -2,8 +2,8 @@
 
 namespace WebHappens\Prismic\Fields;
 
+use WebHappens\Prismic\Query;
 use Illuminate\Support\Collection;
-use WebHappens\Prismic\DocumentResolver;
 
 class LinkResolver
 {
@@ -29,7 +29,7 @@ class LinkResolver
 
     protected function makeDocumentLink($item, $title)
     {
-        if ( ! $document = resolve(DocumentResolver::class)->resolve($item)) {
+        if ( ! $document = Query::make()->find(data_get($item, 'id'))) {
             return null;
         }
 

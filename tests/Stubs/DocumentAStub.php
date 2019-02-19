@@ -4,11 +4,15 @@ namespace WebHappens\Prismic\Tests\Stubs;
 
 use WebHappens\Prismic\Document;
 
-class DocumentStub extends Document
+class DocumentAStub extends Document
 {
-    protected static $type = 'example';
+    protected static $type = 'document_a';
 
     protected $maps = [
         'uri' => 'url',
+    ];
+
+    protected $casts = [
+        'url' => 'url',
     ];
 }

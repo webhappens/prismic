@@ -31,7 +31,7 @@ class Query
             static::$allDocumentsCached = true;
         }
 
-        return new static;
+        return static::make();
     }
 
     public static function setDocumentCache(Collection $records): Collection
@@ -109,6 +109,10 @@ class Query
 
     public function single(): ?Document
     {
+        if ( ! $this->type) {
+            return null;
+        }
+
         return $this->first();
     }
 
@@ -161,9 +165,9 @@ class Query
         }
 
         $page = 1;
+
         do {
             $response = $this->options(compact('pageSize', 'page'))->getRaw();
-
             $results = $this->hydrateDocuments($response->results);
 
             $callback(

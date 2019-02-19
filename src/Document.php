@@ -17,8 +17,6 @@ abstract class Document implements ArrayAccess
 
     protected static $type;
 
-    protected static $isSingle = false;
-
     protected static $globalFieldKeys = [
         'id', 'uid', 'type', 'href', 'tags', 'first_publication_date',
         'last_publication_date', 'lang', 'alternate_languages',
@@ -37,16 +35,6 @@ abstract class Document implements ArrayAccess
     ];
 
     protected $maps = [];
-
-    public static function resolve(...$parameters): ?Document
-    {
-        return resolve(DocumentResolver::class)->resolve(...$parameters);
-    }
-
-    public static function resolveMany($items): Collection
-    {
-        return resolve(DocumentResolver::class)->resolveMany($items);
-    }
 
     public static function make(): Document
     {
@@ -81,11 +69,6 @@ abstract class Document implements ArrayAccess
         }
 
         return $document::make()->hydrate($result);
-    }
-
-    public static function isSingle(): bool
-    {
-        return static::$isSingle;
     }
 
     public static function all(): Collection
@@ -123,10 +106,12 @@ abstract class Document implements ArrayAccess
         $attributes = [];
 
         foreach (static::getGlobalFieldKeys() as $key) {
-            $attributes[$key] = $result->{$key};
+            $attributes[$key] = data_get($result, $key);
         }
 
-        foreach ($result->data as $key => $value) {
+        $data = data_get($result, 'data', []);
+
+        foreach ($data as $key => $value) {
             $attributes[$key] = $value;
         }
 
