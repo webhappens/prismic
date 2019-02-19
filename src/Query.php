@@ -15,7 +15,7 @@ class Query
     protected $type;
     protected $wheres = [];
     protected $options = [];
-    protected $cacheQueryResults = false;
+    protected $shouldCache = false;
     protected static $allDocumentsCached = false;
     protected static $cachedDocuments = [];
 
@@ -58,21 +58,16 @@ class Query
 
     public function cache(): Query
     {
-        $this->cacheQueryResults = true;
+        $this->shouldCache = true;
 
         return $this;
     }
 
     public function dontCache(): Query
     {
-        $this->cacheQueryResults = false;
+        $this->shouldCache = false;
 
         return $this;
-    }
-
-    public function shouldCache(): bool
-    {
-        return $this->cacheQueryResults;
     }
 
     public function type($type): Query
@@ -156,7 +151,7 @@ class Query
     {
         $records = $this->hydrateDocuments(array_shift($this->getRaw()->results));
 
-        return $this->shouldCache() ? static::addToDocumentCache($records)->first() : $records->first();
+        return $this->shouldCache ? static::addToDocumentCache($records)->first() : $records->first();
     }
 
     public function chunk($pageSize, callable $callback)
@@ -172,7 +167,7 @@ class Query
             $results = $this->hydrateDocuments($response->results);
 
             $callback(
-                $this->shouldCache() ? static::addToDocumentCache($results) : $results
+                $this->shouldCache ? static::addToDocumentCache($results) : $results
             );
         } while ($page++ < $response->total_pages);
     }

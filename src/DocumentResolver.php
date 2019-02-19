@@ -8,13 +8,13 @@ class DocumentResolver
 {
     public function resolve($item): ?Document
     {
-        return (new Query)->find(data_get($item, 'id'));
+        return Query::make()->find(data_get($item, 'id'));
     }
 
     public function resolveMany($items): Collection
     {
         $ids = collect($items)->pluck('id')->filter()->toArray();
 
-        return (new Query)->findMany($ids);
+        return Query::make()->findMany($ids);
     }
 }
