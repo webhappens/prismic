@@ -76,7 +76,7 @@ class Traverser
 
     protected function getParentFromChildren(): ?Document
     {
-        return $this->query->recordCache()->first(function ($document) {
+        return $this->query->documentCache()->first(function ($document) {
             $childrenMethod = $this->getChildrenMethod($document);
 
             if (method_exists($document, $childrenMethod)) {
@@ -136,7 +136,7 @@ class Traverser
         if ($parent = $this->document->{$parentMethod}()) {
             $ancestors->prepend($parent->id);
 
-            $ancestors = $parent->traverse()->getAncestors()->merge($ancestors);
+            $ancestors = (new static($parent))->getAncestors()->merge($ancestors);
         }
 
         return $ancestors;

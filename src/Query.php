@@ -7,6 +7,7 @@ use Prismic\Api;
 use Prismic\Predicates;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
 
 class Query
@@ -15,41 +16,44 @@ class Query
     protected $wheres = [];
     protected $options = [];
     protected $cacheQueryResults = false;
-    protected static $allRecordsCached = false;
-    protected static $cachedRecords = [];
+    protected static $allDocumentsCached = false;
+    protected static $cachedDocuments = [];
+
+    public static function make(): Query
+    {
+        return new static;
+    }
 
     public static function eagerLoadAll(): Query
     {
-        if ( ! static::$allRecordsCached) {
-            (new static)->cache()->get();
-            static::$allRecordsCached = true;
+        if ( ! static::$allDocumentsCached) {
+            static::make()->cache()->get();
+            static::$allDocumentsCached = true;
         }
 
         return new static;
     }
 
-    public static function setRecordCache(Collection $records): Collection
+    public static function setDocumentCache(Collection $records): Collection
     {
-        return static::$cachedRecords = $records->keyBy('id');
+        return static::$cachedDocuments = $records->keyBy('id');
     }
 
-    public static function clearRecordCache(): Collection
+    public static function clearDocumentCache(): Collection
     {
-        return static::$cachedRecords = collect();
+        return static::$cachedDocuments = collect();
     }
 
-    public static function addToRecordCache(Collection $records): Collection
+    public static function addToDocumentCache(Collection $documents): Collection
     {
-        $records = $records->keyBy('id');
+        static::setDocumentCache(static::documentCache()->merge($documents->keyBy('id')));
 
-        static::setRecordCache(static::recordCache()->merge($records));
-
-        return $records;
+        return $documents;
     }
 
-    public static function recordCache()
+    public static function documentCache()
     {
-        return collect(static::$cachedRecords);
+        return collect(static::$cachedDocuments);
     }
 
     public function cache(): Query
@@ -68,7 +72,7 @@ class Query
 
     public function shouldCache(): bool
     {
-        return (bool) $this->cacheQueryResults;
+        return $this->cacheQueryResults;
     }
 
     public function type($type): Query
@@ -85,8 +89,8 @@ class Query
             return null;
         }
 
-        if (static::recordCache()->has($id)) {
-            return static::recordCache()->get($id);
+        if (static::documentCache()->has($id)) {
+            return static::documentCache()->get($id);
         }
 
         return $this->where('id', $id)->first();
@@ -98,8 +102,11 @@ class Query
             return collect();
         }
 
-        if (($results = static::recordCache()->only($ids)->values()) && count($ids) === $results->count()) {
-            return $results;
+        if (static::documentCache()->has($ids)) {
+            return collect($ids)
+                ->map(function($id) {
+                    return static::documentCache()->get($id);
+                });
         }
 
         return $this->where('id', 'in', $ids)->get();
@@ -147,9 +154,9 @@ class Query
 
     public function first(): ?Document
     {
-        $record = $this->processResults($this->getRaw()->results)->first();
+        $records = $this->hydrateDocuments(array_shift($this->getRaw()->results));
 
-        return $this->shouldCache() ? static::addToRecordCache(collect([$record])) : $record;
+        return $this->shouldCache() ? static::addToDocumentCache($records)->first() : $records->first();
     }
 
     public function chunk($pageSize, callable $callback)
@@ -162,10 +169,10 @@ class Query
         do {
             $response = $this->options(compact('pageSize', 'page'))->getRaw();
 
-            $results = $this->processResults($response->results);
+            $results = $this->hydrateDocuments($response->results);
 
             $callback(
-                $this->shouldCache() ? static::addToRecordCache($results) : $results
+                $this->shouldCache() ? static::addToDocumentCache($results) : $results
             );
         } while ($page++ < $response->total_pages);
     }
@@ -198,10 +205,13 @@ class Query
         return resolve(Api::class);
     }
 
-    protected function processResults($results): Collection
+    protected function hydrateDocuments(...$results): Collection
     {
-        return collect($results)->map(function ($result) {
-            return Document::newHydratedInstance($result);
-        });
+        return collect($results)
+            ->flatten()
+            ->filter()
+            ->map(function ($result) {
+                return Document::newHydratedInstance($result);
+            });
     }
 }
