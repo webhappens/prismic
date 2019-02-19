@@ -25,7 +25,7 @@ class QueryTest extends TestCase
         $this->assertNull((new Query())->find(null));
 
         $expectedPredicates = (new Query)->where('id', 1)->toPredicates();
-        $query = $this->mockApiQuery($expectedPredicates, $this->mockRawStubSingle());
+        $query = $this->mockApiQuery($expectedPredicates, [], $this->mockRawStubSingle());
 
         Prismic::documents([DocumentAStub::class]);
         $result = $query->find(1);
@@ -40,7 +40,8 @@ class QueryTest extends TestCase
         $this->assertEmpty($results);
 
         $expectedPredicates = (new Query)->where('id', 'in', [1, 2, 3])->toPredicates();
-        $query = $this->mockApiQuery($expectedPredicates, $this->mockRawStubMany());
+        $expectedOptions = ['pageSize' => 100, 'page' => 1];
+        $query = $this->mockApiQuery($expectedPredicates, $expectedOptions, $this->mockRawStubMany());
 
         Prismic::documents([DocumentAStub::class, DocumentBStub::class]);
         $results = $query->findMany([1, 2, 3]);
@@ -56,7 +57,7 @@ class QueryTest extends TestCase
         $this->assertNull((new Query)->single());
 
         $expectedPredicates = (new Query)->where('type', 'document_a')->toPredicates();
-        $query = $this->mockApiQuery($expectedPredicates, $this->mockRawStubSingle());
+        $query = $this->mockApiQuery($expectedPredicates, [], $this->mockRawStubSingle());
         $query->type('document_a');
 
         Prismic::documents([DocumentAStub::class]);
@@ -107,7 +108,8 @@ class QueryTest extends TestCase
     public function test_get()
     {
         $expectedPredicates = (new Query)->toPredicates();
-        $query = $this->mockApiQuery($expectedPredicates, $this->mockRawStubMany());
+        $expectedOptions = ['pageSize' => 100, 'page' => 1];
+        $query = $this->mockApiQuery($expectedPredicates, $expectedOptions, $this->mockRawStubMany());
 
         Prismic::documents([DocumentAStub::class, DocumentBStub::class]);
         $results = $query->get();
@@ -121,7 +123,7 @@ class QueryTest extends TestCase
     public function test_first()
     {
         $expectedPredicates = (new Query)->toPredicates();
-        $query = $this->mockApiQuery($expectedPredicates, $this->mockRawStubMany());
+        $query = $this->mockApiQuery($expectedPredicates, [], $this->mockRawStubMany());
 
         Prismic::documents([DocumentAStub::class]);
         $result = $query->first();
@@ -141,17 +143,19 @@ class QueryTest extends TestCase
         $query->shouldReceive('getRaw')->times(3)->andReturn($responseStub);
 
         $count = 0;
-
         $query->chunk(100, function ($chunk) use (&$count) {
             $count++;
             $this->assertInstanceOf(Collection::class, $chunk);
         });
 
         $this->assertEquals(3, $count);
+    }
 
+    public function test_chunk_exceeding_chunk_limit()
+    {
         $this->expectException(InvalidArgumentException::class);
 
-        $query->chunk(101, function () {
+        (new Query)->chunk(101, function () {
             // do nothing
         });
     }
@@ -190,10 +194,10 @@ class QueryTest extends TestCase
         $this->assertEquals('foobar', (new Query)->api());
     }
 
-    protected function mockApiQuery($expectedPredicates, $return)
+    protected function mockApiQuery($expectedPredicates, $expectedOptions, $return)
     {
         $api = m::mock(Api::class);
-        $api->shouldReceive('query')->with($expectedPredicates, ['pageSize' => 100])->andReturn($return);
+        $api->shouldReceive('query')->with($expectedPredicates, $expectedOptions)->andReturn($return);
 
         $query = m::mock(Query::class . '[api]');
         $query->shouldReceive('api')->once()->andReturn($api);
@@ -203,22 +207,22 @@ class QueryTest extends TestCase
 
     protected function mockRawStubSingle()
     {
-        return (object)[
+        return (object) [
             'total_pages' => 1,
             'results' => [
-                (object)['id' => '1', 'type' => 'document_a', 'data' => []],
+                (object) ['id' => '1', 'type' => 'document_a', 'data' => []],
             ],
         ];
     }
 
     protected function mockRawStubMany()
     {
-        return (object)[
+        return (object) [
             'total_pages' => 1,
             'results' => [
-                (object)['id' => '1', 'type' => 'document_a', 'data' => []],
-                (object)['id' => '2', 'type' => 'document_a', 'data' => []],
-                (object)['id' => '3', 'type' => 'document_b', 'data' => []],
+                (object) ['id' => '1', 'type' => 'document_a', 'data' => []],
+                (object) ['id' => '2', 'type' => 'document_a', 'data' => []],
+                (object) ['id' => '3', 'type' => 'document_b', 'data' => []],
             ],
         ];
     }

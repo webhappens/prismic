@@ -16,6 +16,6 @@ trait Traversable
 
     public function traverse()
     {
-        return (new Traverser($this->id));
+        return (new Traverser($this));
     }
 }

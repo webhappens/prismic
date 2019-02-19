@@ -139,7 +139,7 @@ abstract class Document implements ArrayAccess
 
     public function newQuery(): Query
     {
-        return (new Query)->type($this->getType());
+        return Query::make()->type($this->getType());
     }
 
     public function getMaps()
