@@ -29,21 +29,21 @@ class SliceTest extends TestCase
 
     public function test_using_can_chain()
     {
-        $this->assertInstanceOf(SliceAStub::class, (new SliceAStub([]))->using('foo'));
+        $this->assertInstanceOf(SliceAStub::class, SliceAStub::make([])->using('foo'));
     }
 
     public function test_view_name_default()
     {
-        $this->assertEquals('slices.slice_a', (new SliceAStub([]))->viewName());
+        $this->assertEquals('slices.slice_a', SliceAStub::make([])->viewName());
     }
 
     public function test_using_changes_view_name()
     {
-        $this->assertEquals('slice_a_alt', (new SliceAStub([]))->using('slice_a_alt')->viewName());
+        $this->assertEquals('slice_a_alt', SliceAStub::make([])->using('slice_a_alt')->viewName());
     }
 
     public function test_data()
     {
-        $this->assertEquals('bar', (new SliceAStub(['foo' => 'bar']))->getFoo());
+        $this->assertEquals('bar', SliceAStub::make(['foo' => 'bar'])->getFoo());
     }
 }

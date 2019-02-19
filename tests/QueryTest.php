@@ -5,10 +5,12 @@ namespace WebHappens\Prismic\Tests;
 use Prismic\Api;
 use Mockery as m;
 use Hamcrest\Matchers;
+use Illuminate\Support\Arr;
 use Prismic\SimplePredicate;
 use InvalidArgumentException;
 use WebHappens\Prismic\Query;
 use WebHappens\Prismic\Prismic;
+use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
 use WebHappens\Prismic\Tests\Stubs\DocumentAStub;
 use WebHappens\Prismic\Tests\Stubs\DocumentBStub;
@@ -17,14 +19,14 @@ class QueryTest extends TestCase
 {
     public function test_type_can_chain()
     {
-        $this->assertInstanceOf(Query::class, (new Query)->type('document_a'));
+        $this->assertInstanceOf(Query::class, Query::make()->type('document_a'));
     }
 
     public function test_find()
     {
-        $this->assertNull((new Query())->find(null));
+        $this->assertNull(Query::make()->find(null));
 
-        $expectedPredicates = (new Query)->where('id', 1)->toPredicates();
+        $expectedPredicates = Query::make()->where('id', 1)->toPredicates();
         $query = $this->mockApiQuery($expectedPredicates, [], $this->mockRawStubSingle());
 
         Prismic::documents([DocumentAStub::class]);
@@ -35,11 +37,11 @@ class QueryTest extends TestCase
 
     public function test_find_many()
     {
-        $results = (new Query())->findMany([]);
+        $results = Query::make()->findMany([]);
         $this->assertInstanceOf(Collection::class, $results);
         $this->assertEmpty($results);
 
-        $expectedPredicates = (new Query)->where('id', 'in', [1, 2, 3])->toPredicates();
+        $expectedPredicates = Query::make()->where('id', 'in', [1, 2, 3])->toPredicates();
         $expectedOptions = ['pageSize' => 100, 'page' => 1];
         $query = $this->mockApiQuery($expectedPredicates, $expectedOptions, $this->mockRawStubMany());
 
@@ -54,9 +56,9 @@ class QueryTest extends TestCase
 
     public function test_single()
     {
-        $this->assertNull((new Query)->single());
+        $this->assertNull(Query::make()->single());
 
-        $expectedPredicates = (new Query)->where('type', 'document_a')->toPredicates();
+        $expectedPredicates = Query::make()->where('type', 'document_a')->toPredicates();
         $query = $this->mockApiQuery($expectedPredicates, [], $this->mockRawStubSingle());
         $query->type('document_a');
 
@@ -68,12 +70,12 @@ class QueryTest extends TestCase
 
     public function test_where_can_chain()
     {
-        $this->assertInstanceOf(Query::class, (new Query)->where('id', '1'));
+        $this->assertInstanceOf(Query::class, Query::make()->where('id', '1'));
     }
 
     public function test_where_with_global_field()
     {
-        $predicates = (new Query)
+        $predicates = Query::make()
             ->where('id', '1')
             ->toPredicates();
 
@@ -83,7 +85,7 @@ class QueryTest extends TestCase
 
     public function test_where_without_type()
     {
-        $predicates = (new Query)
+        $predicates = Query::make()
             ->where('example.name', 'in', ['ben', 'sam'])
             ->toPredicates();
 
@@ -93,7 +95,7 @@ class QueryTest extends TestCase
 
     public function test_where_with_type()
     {
-        $predicates = (new Query)
+        $predicates = Query::make()
             ->type('example')
             ->where('name', 'in', ['ben', 'sam'])
             ->where('example.foo', 'bar')
@@ -107,9 +109,8 @@ class QueryTest extends TestCase
 
     public function test_get()
     {
-        $expectedPredicates = (new Query)->toPredicates();
         $expectedOptions = ['pageSize' => 100, 'page' => 1];
-        $query = $this->mockApiQuery($expectedPredicates, $expectedOptions, $this->mockRawStubMany());
+        $query = $this->mockApiQuery([], $expectedOptions, $this->mockRawStubMany());
 
         Prismic::documents([DocumentAStub::class, DocumentBStub::class]);
         $results = $query->get();
@@ -122,8 +123,7 @@ class QueryTest extends TestCase
 
     public function test_first()
     {
-        $expectedPredicates = (new Query)->toPredicates();
-        $query = $this->mockApiQuery($expectedPredicates, [], $this->mockRawStubMany());
+        $query = $this->mockApiQuery([], [], $this->mockRawStubMany());
 
         Prismic::documents([DocumentAStub::class]);
         $result = $query->first();
@@ -133,36 +133,63 @@ class QueryTest extends TestCase
 
     public function test_chunk()
     {
-        $responseStub = (object) [
-            'total_pages' => 3,
-            'results' => [],
+        $rawStubs = [
+            (object) [
+                'total_pages' => 3,
+                'results' => [
+                    (object) ['id' => '1', 'type' => 'document_a'],
+                    (object) ['id' => '2', 'type' => 'document_a'],
+                ],
+            ],
+            (object) [
+                'total_pages' => 3,
+                'results' => [
+                    (object) ['id' => '3', 'type' => 'document_a'],
+                    (object) ['id' => '4', 'type' => 'document_b'],
+                ],
+            ],
+            (object) [
+                'total_pages' => 3,
+                'results' => [
+                    (object) ['id' => '5', 'type' => 'document_b'],
+                ],
+            ],
         ];
 
-        $query = m::mock(Query::class . '[options,getRaw]');
-        $query->shouldReceive('options')->times(3)->andReturnSelf();
-        $query->shouldReceive('getRaw')->times(3)->andReturn($responseStub);
+        $expectedOptions = m::anyOf(
+            ['pageSize' => 2, 'page' => 1],
+            ['pageSize' => 2, 'page' => 2],
+            ['pageSize' => 2, 'page' => 3]
+        );
+        $query = $this->mockApiQuery([], $expectedOptions, $rawStubs);
 
-        $count = 0;
-        $query->chunk(100, function ($chunk) use (&$count) {
-            $count++;
-            $this->assertInstanceOf(Collection::class, $chunk);
+        Prismic::documents([DocumentAStub::class, DocumentBStub::class]);
+        $documents = collect();
+        $query->chunk(2, function ($chunk) use ($documents) {
+            $documents->push($chunk);
         });
-
-        $this->assertEquals(3, $count);
+        $documents = $documents->flatten();
+        $this->assertCount(5, $documents);
+        $this->assertInstanceOf(DocumentAStub::class, $documents[0]);
+        $this->assertInstanceOf(DocumentAStub::class, $documents[1]);
+        $this->assertInstanceOf(DocumentAStub::class, $documents[2]);
+        $this->assertInstanceOf(DocumentBStub::class, $documents[3]);
+        $this->assertInstanceOf(DocumentBStub::class, $documents[4]);
+        Prismic::$documents = [];
     }
 
     public function test_chunk_exceeding_chunk_limit()
     {
         $this->expectException(InvalidArgumentException::class);
 
-        (new Query)->chunk(101, function () {
+        Query::make()->chunk(101, function () {
             // do nothing
         });
     }
 
     public function test_to_predicates()
     {
-        $predicates = (new Query)
+        $predicates = Query::make()
             ->where('id', '1')
             ->where('example.name', 'in', ['ben', 'sam'])
             ->toPredicates();
@@ -174,33 +201,34 @@ class QueryTest extends TestCase
 
     public function test_get_raw()
     {
-        $query = m::mock(Query::class . '[api]');
-        $api = m::mock(Api::class);
-        $query->options(['foo' => 'bar']);
-        $query->where('id', '1')->where('name', 'in', ['ben', 'sam']);
-        $query->shouldReceive('api')->once()->andReturn($api);
-        $api->shouldReceive('query')->once()->with($query->toPredicates(), ['foo' => 'bar']);
-        $query->getRaw();
+        $query = $this->mockApiQuery([], [], $this->mockRawStubSingle());
+        $this->assertEquals($this->mockRawStubSingle(), $query->getRaw());
     }
 
     public function test_options_can_chain()
     {
-        $this->assertInstanceOf(Query::class, (new Query)->options([]));
+        $this->assertInstanceOf(Query::class, Query::make()->options([]));
     }
 
     public function test_api_returns_prismic_api_instance()
     {
         $this->swap(Api::class, 'foobar');
-        $this->assertEquals('foobar', (new Query)->api());
+        $this->assertEquals('foobar', Query::make()->api());
     }
 
     protected function mockApiQuery($expectedPredicates, $expectedOptions, $return)
     {
+        $return = Arr::wrap($return);
+        $times = count($return);
+
         $api = m::mock(Api::class);
-        $api->shouldReceive('query')->with($expectedPredicates, $expectedOptions)->andReturn($return);
+        $api->shouldReceive('query')
+            ->with($expectedPredicates, $expectedOptions)
+            ->times($times)
+            ->andReturn(...$return);
 
         $query = m::mock(Query::class . '[api]');
-        $query->shouldReceive('api')->once()->andReturn($api);
+        $query->shouldReceive('api')->times($times)->andReturn($api);
 
         return $query;
     }
@@ -210,7 +238,7 @@ class QueryTest extends TestCase
         return (object) [
             'total_pages' => 1,
             'results' => [
-                (object) ['id' => '1', 'type' => 'document_a', 'data' => []],
+                (object) ['id' => '1', 'type' => 'document_a'],
             ],
         ];
     }
@@ -220,9 +248,9 @@ class QueryTest extends TestCase
         return (object) [
             'total_pages' => 1,
             'results' => [
-                (object) ['id' => '1', 'type' => 'document_a', 'data' => []],
-                (object) ['id' => '2', 'type' => 'document_a', 'data' => []],
-                (object) ['id' => '3', 'type' => 'document_b', 'data' => []],
+                (object) ['id' => '1', 'type' => 'document_a'],
+                (object) ['id' => '2', 'type' => 'document_a'],
+                (object) ['id' => '3', 'type' => 'document_b'],
             ],
         ];
     }

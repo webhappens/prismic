@@ -44,13 +44,13 @@ class PrismicTest extends TestCase
     public function test_preview()
     {
         $token = 'my-token';
-        $documentResolver = Matchers::equalTo(new DocumentUrlResolver);
+        $documentUrlResolver = Matchers::equalTo(new DocumentUrlResolver);
         $url = 'https://example.org';
 
         $api = m::mock(Api::class);
         $api->shouldReceive('previewSession')
             ->once()
-            ->with($token, $documentResolver, '/')
+            ->with($token, $documentUrlResolver, '/')
             ->andReturn($url);
         $this->swap(Api::class, $api);
 

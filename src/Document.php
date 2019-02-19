@@ -36,16 +36,6 @@ abstract class Document implements ArrayAccess
 
     protected $maps = [];
 
-    public static function resolve(...$parameters): ?Document
-    {
-        return resolve(DocumentResolver::class)->resolve(...$parameters);
-    }
-
-    public static function resolveMany($items): Collection
-    {
-        return resolve(DocumentResolver::class)->resolveMany($items);
-    }
-
     public static function make(): Document
     {
         return new static;
@@ -119,7 +109,9 @@ abstract class Document implements ArrayAccess
             $attributes[$key] = data_get($result, $key);
         }
 
-        foreach ($result->data as $key => $value) {
+        $data = data_get($result, 'data', []);
+
+        foreach ($data as $key => $value) {
             $attributes[$key] = $value;
         }
 

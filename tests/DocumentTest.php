@@ -9,7 +9,6 @@ use WebHappens\Prismic\Slice;
 use WebHappens\Prismic\Prismic;
 use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
-use WebHappens\Prismic\DocumentResolver;
 use WebHappens\Prismic\Tests\Stubs\SliceAStub;
 use WebHappens\Prismic\Tests\Stubs\SliceBStub;
 use WebHappens\Prismic\Tests\Stubs\DocumentAStub;
@@ -17,24 +16,6 @@ use WebHappens\Prismic\Tests\Stubs\DocumentBStub;
 
 class DocumentTest extends TestCase
 {
-    public function test_resolve()
-    {
-        $item = new stdClass;
-        $documentResolver = m::mock(DocumentResolver::class);
-        $documentResolver->shouldReceive('resolve')->once()->with($item)->andReturn(new DocumentAStub);
-        $this->swap(DocumentResolver::class, $documentResolver);
-        $this->assertInstanceOf(DocumentAStub::class, Document::resolve($item));
-    }
-
-    public function test_resolve_many()
-    {
-        $items = ['a', 'b', 'c'];
-        $documentResolver = m::mock(DocumentResolver::class);
-        $documentResolver->shouldReceive('resolveMany')->once()->with($items)->andReturn(collect('d', 'e', 'f'));
-        $this->swap(DocumentResolver::class, $documentResolver);
-        $this->assertInstanceOf(Collection::class, Document::resolveMany($items));
-    }
-
     public function test_make()
     {
         $this->assertInstanceOf(DocumentAStub::class, DocumentAStub::make());
@@ -85,7 +66,7 @@ class DocumentTest extends TestCase
 
     public function test_is_linkable()
     {
-        $document = new DocumentAStub;
+        $document = DocumentAStub::make();
         $this->assertFalse($document->isLinkable());
         $document->title = 'foo';
         $document->url = 'https://example.org';
@@ -95,7 +76,7 @@ class DocumentTest extends TestCase
     public function test_get_slices()
     {
         Prismic::slices([SliceAStub::class, SliceBStub::class]);
-        $document = new DocumentAStub;
+        $document = DocumentAStub::make();
         $document->body = [
             ['slice_type' => 'slice_a'],
             ['slice_type' => 'slice_b'],
@@ -116,7 +97,7 @@ class DocumentTest extends TestCase
 
     public function test_new_query()
     {
-        $query = (new DocumentAStub)->newQuery();
+        $query = DocumentAStub::make()->newQuery();
         $predicates = $query->toPredicates();
         $this->assertInstanceOf(Query::class, $query);
         $this->assertCount(1, $predicates);
@@ -131,7 +112,7 @@ class DocumentTest extends TestCase
             'last_publication_date' => 'last_published',
             'lang' => 'language',
             'uri' => 'url',
-        ], (new DocumentAStub)->getMaps());
+        ], DocumentAStub::make()->getMaps());
     }
 
     public function test_get_casts()
@@ -140,6 +121,12 @@ class DocumentTest extends TestCase
             'first_published' => 'date',
             'last_published' => 'date',
             'url' => 'url',
-        ], (new DocumentAStub)->getCasts());
+        ], DocumentAStub::make()->getCasts());
+    }
+
+    public function test_call_forwarding_to_query()
+    {
+        $this->assertInstanceOf(Query::class, DocumentAStub::make()->where('foo', 'bar'));
+        $this->assertInstanceOf(Query::class, DocumentAStub::where('foo', 'bar'));
     }
 }

@@ -11,7 +11,7 @@ class SliceAStub extends Slice
 
     public function toHtml(): HtmlString
     {
-        return new HtmlString('<div>Slice A</div>');
+        return new HtmlString();
     }
 
     public function getFoo()
