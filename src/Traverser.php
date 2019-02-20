@@ -2,114 +2,89 @@
 
 namespace WebHappens\Prismic;
 
+use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
 
 class Traverser
 {
     protected $query;
     protected $document;
-    protected $parentId;
-    protected $childrenIds;
-    protected $parentMethods;
-    protected $childrenMethods;
+    protected $parentResolver = [];
+    protected $childrenResolver = [];
 
-    public function __construct($document)
+    public static function make($target = null)
+    {
+        if (is_null($target)) {
+            $target = collect(debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 3))
+                ->map(function($trace) {
+                    return data_get($trace, 'object');
+                })
+                ->first(function($object) {
+                    return $object && $object instanceof Document;
+                });
+        }
+
+        return new static($target);
+    }
+
+    public function __construct(Document $document, $parentResolver = ['default' => 'parent'], $childrenResolver = ['default' => 'children'])
     {
         $this->document = $document;
 
         $this->query = Query::eagerLoadAll();
 
-        $this->parentMethods = collect(
-            array_fill_keys(Prismic::$documents, 'parent')
-        );
-
-        $this->childrenMethods = collect(
-            array_fill_keys(Prismic::$documents, 'children')
-        );
+        $this->parentResolver = collect($parentResolver);
+        $this->childrenResolver = collect($childrenResolver);
     }
 
-    public function setParentId($id): Traverser
+    public function resolveParentThrough($attributeOrMethod = 'parent', ...$for): Traverser
     {
-        $this->parentId = $id;
+        if ( ! $for) {
+            $for = ['default'];
+        }
+
+        $this->parentResolver = collect($this->parentResolver)->merge(array_fill_keys($for, $attributeOrMethod));
 
         return $this;
     }
 
-    public function setChildrenIds($ids): Traverser
+    public function resolveChildrenThrough($attributeOrMethod = 'children', ...$for): Traverser
     {
-        $this->childrenIds = collect($ids);
+        if (!$for) {
+            $for = ['default'];
+        }
 
-        return $this;
-    }
-
-    public function setParentMethods($methods): Traverser
-    {
-        $this->parentMethods->merge($methods);
-
-        return $this;
-    }
-
-    public function setChildrenMethods(array $methods): Traverser
-    {
-        $this->childrenMethods->merge($methods);
+        $this->childrenResolver = collect($this->childrenResolver)->merge(array_fill_keys($for, $attributeOrMethod));
 
         return $this;
     }
 
     public function parent(): ?Document
     {
-        if ($this->parentId === false) {
-            return null;
-        }
+        return $this->resolveParent();
 
-        if ($this->parentId) {
-            return $this->getParentFromId();
-        }
-
-        return $this->getParentFromChildren();
     }
 
-    protected function getParentFromId(): ?Document
+    public function parentViaChildren($type = null): ?Document
     {
-        return $this->query->find($this->parentId);
-    }
-
-    protected function getParentFromChildren(): ?Document
-    {
-        return $this->query->documentCache()->first(function ($document) {
-            $childrenMethod = $this->getChildrenMethod($document);
-
-            if (method_exists($document, $childrenMethod)) {
-                return $document->{$childrenMethod}()
-                    ->filter()
+        return $this->query->documentCache()
+            ->reject(function ($document) use ($type) {
+                return $type && $document->getType() != $type;
+            })
+            ->first(function ($document) {
+                return $this->resolveChildren($document)
                     ->first(function ($document) {
-                        return $document->id == $this->document->id;
+                        return $document->id === $this->document->id;
                     });
-            }
         });
     }
 
     public function children(): Collection
     {
-        if ($this->childrenIds === false) {
-            return collect();
-        }
-
-        if (count($this->childrenIds)) {
-            return $this->getChildrenFromIds();
-        }
-
-        return $this->getChildrenFromParent();
+        return $this->resolveChildren();
     }
 
-    protected function getChildrenFromIds(): Collection
-    {
-        return $this->childrenIds->map(function($id) {
-            return $this->query->find($id);
-        });
-    }
-
-    protected function getChildrenFromParent(): Collection
+    protected function childrenViaParent(): Collection
     {
         // @todo
         return collect();
@@ -117,9 +92,15 @@ class Traverser
 
     public function ancestors(): Collection
     {
-        return $this->getAncestors()->map(function($id) {
-            return $this->query->find($id);
-        });
+        $ancestors = collect();
+
+        if ($parent = $this->resolveParent()) {
+            $ancestors->prepend($parent);
+
+            $ancestors = (new static($parent))->ancestors()->merge($ancestors);
+        }
+
+        return $ancestors;
     }
 
     public function ancestorsAndSelf(): Collection
@@ -127,48 +108,22 @@ class Traverser
         return $this->ancestors()->push($this->document);
     }
 
-    protected function getAncestors(): Collection
-    {
-        $ancestors = collect();
-
-        $parentMethod = $this->getParentMethod($this->document);
-
-        if ($parent = $this->document->{$parentMethod}()) {
-            $ancestors->prepend($parent->id);
-
-            $ancestors = (new static($parent))->getAncestors()->merge($ancestors);
-        }
-
-        return $ancestors;
-    }
-
     public function descendants(): Collection
     {
-        return $this->getDescendants()->map(function($id) {
-            return $this->query->find($id);
+        $descendants = collect();
+
+        $this->resolveChildren()->each(function($child) use ($descendants) {
+            $descendants = $descendants
+                ->push($child)
+                ->merge((new static($child))->descendants());
         });
+
+        return $descendants;
     }
 
     public function descendantsAndSelf(): Collection
     {
         return $this->descendants()->prepend($this->document);
-    }
-
-    protected function getDescendants(): Collection
-    {
-        $descendants = collect();
-
-        $childrenMethod = $this->getChildrenMethod($this->document);
-
-        if ($children = $this->document->{$childrenMethod}()) {
-            foreach ($children as $child) {
-                $descendants = $descendants
-                    ->push($child->id)
-                    ->merge($child->traverse()->getDescendants());
-            }
-        }
-
-        return $descendants;
     }
 
     public function siblings(): Collection
@@ -187,13 +142,60 @@ class Traverser
         return $parent->children();
     }
 
-    protected function getParentMethod(Document $document)
+    public function siblingsNext(): ?Document
     {
-        return $this->parentMethods->get(get_class($document));
+        return $this->siblingsAfter()->first();
     }
 
-    protected function getChildrenMethod(Document $document)
+    public function siblingsAfter(): Collection
     {
-        return $this->childrenMethods->get(get_class($document));
+        return $this->siblingsAndSelf()->slice($this->siblingsPosition()+1);
+
+    }
+
+    public function siblingsPrevious(): ?Document
+    {
+        return $this->siblingsBefore()->last();
+
+    }
+
+    public function siblingsBefore() : Collection
+    {
+        return $this->siblingsAndSelf()->slice(0, $this->siblingsPosition());
+    }
+
+    public function siblingsPosition()
+    {
+        return $this->siblingsAndSelf()->search(function ($sibling, $key) {
+            return $sibling->id == $this->document->id;
+        });
+    }
+
+    protected function resolveParent($document = null): ?Document
+    {
+        return $this->resolveDocument($this->parentResolver, $document ?: $this->document);
+    }
+
+    protected function resolveChildren($document = null)
+    {
+        return $this->resolveDocument($this->childrenResolver, $document ?: $this->document) ?: collect();
+    }
+
+    protected function resolveDocument($collection, $document) {
+        $attributeOrMethod = $collection->get(get_class($document)) ? : $collection->get('default');
+
+        if (!$attributeOrMethod) {
+            return null;
+        }
+
+        if (method_exists($document, $attributeOrMethod)) {
+            return $document->$attributeOrMethod();
+        }
+
+        if (isset($document, $attributeOrMethod)) {
+            return $document->$attributeOrMethod;
+        }
+
+        return null;
     }
 }
