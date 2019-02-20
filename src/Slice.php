@@ -2,7 +2,6 @@
 
 namespace WebHappens\Prismic;
 
-use Illuminate\Support\HtmlString;
 use Illuminate\Contracts\Support\Htmlable;
 
 abstract class Slice implements Htmlable
@@ -12,7 +11,7 @@ abstract class Slice implements Htmlable
     protected $viewName;
     protected $_data;
 
-    abstract public function toHtml(): HtmlString;
+    abstract public function toHtml();
 
     public static function getType(): string
     {

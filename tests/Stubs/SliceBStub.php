@@ -3,14 +3,13 @@
 namespace WebHappens\Prismic\Tests\Stubs;
 
 use WebHappens\Prismic\Slice;
-use Illuminate\Support\HtmlString;
 
 class SliceBStub extends Slice
 {
     protected static $type = 'slice_b';
 
-    public function toHtml(): HtmlString
+    public function toHtml()
     {
-        return new HtmlString();
+        return '';
     }
 }

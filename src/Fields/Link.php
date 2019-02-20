@@ -2,8 +2,6 @@
 
 namespace WebHappens\Prismic\Fields;
 
-use Illuminate\Support\Collection;
-use Illuminate\Support\HtmlString;
 use Illuminate\Contracts\Support\Htmlable;
 use WebHappens\Prismic\Fields\LinkResolver;
 use WebHappens\Prismic\Contracts\Fields\LinkHtmlSerializer;
@@ -63,11 +61,9 @@ abstract class Link implements Htmlable
         return $this->attributes;
     }
 
-    public function toHtml(): HtmlString
+    public function toHtml()
     {
-        return new HtmlString(
-            (resolve(LinkHtmlSerializer::class))->serialize($this)
-        );
+        return (resolve(LinkHtmlSerializer::class))->serialize($this);
     }
 
     public function __toString()

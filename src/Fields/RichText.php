@@ -2,7 +2,6 @@
 
 namespace WebHappens\Prismic\Fields;
 
-use Illuminate\Support\HtmlString;
 use Illuminate\Contracts\Support\Htmlable;
 use WebHappens\Prismic\DocumentUrlResolver;
 use Prismic\Dom\RichText as PrismicRichText;
@@ -27,14 +26,12 @@ class RichText implements Htmlable
         return $this->__toString();
     }
 
-    public function toHtml(): HtmlString
+    public function toHtml()
     {
-        return new HtmlString(
-            PrismicRichText::asHtml(
-                $this->data,
-                resolve(DocumentUrlResolver::class),
-                resolve(RichTextHtmlSerializer::class)
-            )
+        return PrismicRichText::asHtml(
+            $this->data,
+            resolve(DocumentUrlResolver::class),
+            resolve(RichTextHtmlSerializer::class)
         );
     }
 
