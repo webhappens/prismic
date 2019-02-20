@@ -43,8 +43,8 @@ class DateFieldTest extends TestCase
         );
 
         $this->assertEquals(
-            '<time datetime="2019-02-19 09:13">2019-02-19 09:13:00</time>',
-            Date::make('2019-02-19T09:13:44+0000')->startOfMinute()->toHtml()
+            '<time datetime="2020-02-19 09:13">2020-02-19 09:13:44</time>',
+            Date::make('2019-02-19T09:13:44+0000')->addYear()->toHtml()
         );
     }
 }
