@@ -7,10 +7,15 @@ use Illuminate\Support\Collection;
 
 class Traverser
 {
+    public static $defaultRelations = [
+        'id' => 'id',
+        'parent' => 'parent',
+        'children' => 'children',
+    ];
+
     protected $query;
     protected $document;
-    protected $parentResolver = [];
-    protected $childrenResolver = [];
+    protected $relations = [];
 
     public static function make($target = null)
     {
@@ -27,77 +32,82 @@ class Traverser
         return new static($target);
     }
 
-    public function __construct(Document $document, $parentResolver = ['default' => 'parent'], $childrenResolver = ['default' => 'children'])
+    public function __construct(Document $document, $relations = [])
     {
         $this->document = $document;
 
         $this->query = Query::eagerLoadAll();
 
-        $this->parentResolver = collect($parentResolver);
-        $this->childrenResolver = collect($childrenResolver);
+        $this->relations = collect($relations);
     }
 
-    public function resolveParentThrough($attributeOrMethod = 'parent', ...$for): Traverser
-    {
-        if ( ! $for) {
-            $for = ['default'];
-        }
-
-        $this->parentResolver = collect($this->parentResolver)->merge(array_fill_keys($for, $attributeOrMethod));
+    public function for($class, $parent = null, $children = null, $id = null) {
+        $this->relations->put($class, array_filter(compact('parent', 'children', 'id')));
 
         return $this;
     }
 
-    public function resolveChildrenThrough($attributeOrMethod = 'children', ...$for): Traverser
+    public function parentFor($class, $parent)
     {
-        if (!$for) {
-            $for = ['default'];
-        }
+        return $this->for($class, $parent, null, null);
+    }
 
-        $this->childrenResolver = collect($this->childrenResolver)->merge(array_fill_keys($for, $attributeOrMethod));
+    public function childrenFor($class, $children)
+    {
+        return $this->for($class, null, $children, null);
+    }
 
-        return $this;
+    public function idFor($class, $id)
+    {
+        return $this->for($class, null, null, $id);
+    }
+
+    public function id()
+    {
+        return $this->resolveRelation('id');
     }
 
     public function parent(): ?Document
     {
-        return $this->resolveParent();
-
+        return $this->resolveRelation('parent');
     }
 
-    public function parentViaChildren($type = null): ?Document
+    public function findParent($class = null): ?Document
     {
         return $this->query->documentCache()
-            ->reject(function ($document) use ($type) {
-                return $type && $document->getType() != $type;
+            ->reject(function ($document) use ($class) {
+                return $class && get_class($document) != $class;
             })
             ->first(function ($document) {
-                return $this->resolveChildren($document)
+                return static::make($document)->children()
                     ->first(function ($document) {
-                        return $document->id === $this->document->id;
+                        return $this->is($document);
                     });
         });
     }
 
     public function children(): Collection
     {
-        return $this->resolveChildren();
+        return $this->resolveRelation('children', collect());
     }
 
-    protected function childrenViaParent(): Collection
+    protected function findChildren(): Collection
     {
-        // @todo
-        return collect();
+        return $this->query->documentCache()
+            ->filter(function ($document) {
+                return $parent = static::make($document)->parent()
+                    && $this->is($parent);
+            });
     }
 
     public function ancestors(): Collection
     {
         $ancestors = collect();
 
-        if ($parent = $this->resolveParent()) {
+        if ($parent = $this->parent()) {
             $ancestors->prepend($parent);
 
-            $ancestors = (new static($parent))->ancestors()->merge($ancestors);
+            $ancestors = static::make($parent, $this->relations)->ancestors()->merge($ancestors);
         }
 
         return $ancestors;
@@ -112,10 +122,10 @@ class Traverser
     {
         $descendants = collect();
 
-        $this->resolveChildren()->each(function($child) use ($descendants) {
+        $this->children()->each(function($child) use ($descendants) {
             $descendants = $descendants
                 ->push($child)
-                ->merge((new static($child))->descendants());
+                ->merge((static::make($child, $this->relations))->descendants());
         });
 
         return $descendants;
@@ -129,7 +139,7 @@ class Traverser
     public function siblings(): Collection
     {
         return $this->siblingsAndSelf()->reject(function ($document) {
-            return $document->id == $this->document->id;
+            return $this->is($document);
         });
     }
 
@@ -167,35 +177,43 @@ class Traverser
     public function siblingsPosition()
     {
         return $this->siblingsAndSelf()->search(function ($sibling, $key) {
-            return $sibling->id == $this->document->id;
+            return $this->is($sibling);
         });
     }
 
-    protected function resolveParent($document = null): ?Document
+    protected function is($document): bool
     {
-        return $this->resolveDocument($this->parentResolver, $document ?: $this->document);
+        $id = static::make($document)->id();
+
+        if (is_null($id)) {
+            return false;
+        }
+
+        return $id === $this->id();
     }
 
-    protected function resolveChildren($document = null)
-    {
-        return $this->resolveDocument($this->childrenResolver, $document ?: $this->document) ?: collect();
+    protected function resolveRelation($relation, $default = null) {
+        $relation = $this->getRelation($relation);
+
+        if ( ! $relation) {
+            return $default;
+        }
+
+        if (method_exists($this->document, $relation)) {
+            return $this->document->$relation();
+        }
+
+        if (isset($this->document, $relation)) {
+            return $this->document->$relation;
+        }
+
+        return $default;
     }
 
-    protected function resolveDocument($collection, $document) {
-        $attributeOrMethod = $collection->get(get_class($document)) ? : $collection->get('default');
+    protected function getRelation($relation)
+    {
+        $localRelations = collect($this->relations->get(get_class($this->document)));
 
-        if (!$attributeOrMethod) {
-            return null;
-        }
-
-        if (method_exists($document, $attributeOrMethod)) {
-            return $document->$attributeOrMethod();
-        }
-
-        if (isset($document, $attributeOrMethod)) {
-            return $document->$attributeOrMethod;
-        }
-
-        return null;
+        return $localRelations->get($relation, static::$defaultRelations[$relation]);
     }
 }
