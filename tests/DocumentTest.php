@@ -3,6 +3,7 @@
 namespace WebHappens\Prismic\Tests;
 
 use stdClass;
+use Prismic\Api;
 use Mockery as m;
 use WebHappens\Prismic\Query;
 use WebHappens\Prismic\Slice;
@@ -64,6 +65,30 @@ class DocumentTest extends TestCase
         Prismic::$documents = [];
     }
 
+    public function test_all()
+    {
+        $rawStub = (object) [
+            'total_pages' => 1,
+            'results' => [
+                (object) ['id' => '1', 'type' => 'document_a'],
+                (object) ['id' => '2', 'type' => 'document_a'],
+            ],
+        ];
+
+        $expectedPredicates = Query::make()->where('type', 'document_a')->toPredicates();
+        $expectedOptions = ['pageSize' => 100, 'page' => 1];
+
+        $api = m::mock(Api::class);
+        $api->shouldReceive('query')->once()->with($expectedPredicates, $expectedOptions)->andReturn($rawStub);
+        $this->swap(Api::class, $api);
+
+        Prismic::documents([DocumentAStub::class]);
+        $all = DocumentAStub::all();
+        $this->assertCount(2, $all);
+        $this->assertContainsOnlyInstancesOf(DocumentAStub::class, $all);
+        Prismic::$documents = [];
+    }
+
     public function test_is_linkable()
     {
         $document = DocumentAStub::make();
@@ -76,6 +101,7 @@ class DocumentTest extends TestCase
     public function test_get_slices()
     {
         Prismic::slices([SliceAStub::class, SliceBStub::class]);
+
         $document = DocumentAStub::make();
         $document->body = [
             ['slice_type' => 'slice_a'],

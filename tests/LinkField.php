@@ -47,7 +47,7 @@ class LinkField extends TestCase
     public function assertCanToHtml($link)
     {
         $this->assertEquals(
-            '<a href="http://example.org" class="foo">Example Title</a>',
+            '<a href="https://example.org" class="foo">Example Title</a>',
             $link->toHtml()
         );
     }

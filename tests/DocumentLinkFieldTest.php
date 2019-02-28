@@ -62,7 +62,7 @@ class DocumentLinkFieldTest extends LinkField
     protected function documentStub()
     {
         $document = DocumentAStub::make();
-        $document->url = 'http://example.org';
+        $document->url = 'https://example.org';
         $document->title = 'Example Title';
 
         return $document;

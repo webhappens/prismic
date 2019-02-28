@@ -19,7 +19,11 @@ class MediaLink extends Link
             $title = data_get(pathinfo($this->getFileName()), 'filename');
         }
 
-        return $title . sprintf(' (%s %s)', strtoupper($this->getFileExtension()), $this->getHumanReadableFileSize());
+        if ($this->meta) {
+            return $title . sprintf(' (%s %s)', strtoupper($this->getFileExtension()), $this->getHumanReadableFileSize());
+        }
+
+        return $title;
     }
 
     public function getFileName(): ?string
@@ -43,7 +47,7 @@ class MediaLink extends Link
             return null;
         }
 
-        $size = array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
+        $size = ['B', 'KB', 'MB', 'GB', 'TB'];
         $factor = floor(log($bytes) / log(1024));
 
         return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . @$size[$factor];

@@ -4,13 +4,11 @@ namespace WebHappens\Prismic\Tests;
 
 use Prismic\Api;
 use Mockery as m;
-use Hamcrest\Matchers;
 use Illuminate\Support\Arr;
 use Prismic\SimplePredicate;
 use InvalidArgumentException;
 use WebHappens\Prismic\Query;
 use WebHappens\Prismic\Prismic;
-use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
 use WebHappens\Prismic\Tests\Stubs\DocumentAStub;
 use WebHappens\Prismic\Tests\Stubs\DocumentBStub;
@@ -20,6 +18,59 @@ class QueryTest extends TestCase
     public function test_make()
     {
         $this->assertInstanceOf(Query::class, Query::make());
+    }
+
+    public function test_eager_load_all()
+    {
+        $api = m::mock(Api::class);
+        $api->shouldReceive('query')
+            ->once()
+            ->with([], ['pageSize' => 100, 'page' => 1])
+            ->andReturn($this->mockRawStubMany());
+        $this->swap(Api::class, $api);
+
+        $this->assertManyAddedToCache(function () {
+            $query = Query::eagerLoadAll();
+            $this->assertInstanceOf(Query::class, $query);
+        });
+    }
+
+    public function test_interaction_with_document_cache()
+    {
+        $this->assertEmpty(Query::documentCache());
+
+        $stubs = collect([
+            ['id' => '1', 'foo' => 'bar'],
+            ['id' => '2', 'foo' => 'bar'],
+            ['id' => '3', 'foo' => 'bar'],
+        ]);
+
+        $set = Query::setDocumentCache($stubs);
+        $this->assertEquals($stubs->keyBy('id'), $set);
+        $this->assertEquals($stubs->keyBy('id'), Query::documentCache());
+
+        $additionalStubs = collect([
+            ['id' => '4', 'foo' => 'bar'],
+            ['id' => '5', 'foo' => 'bar'],
+        ]);
+
+        $addTo = Query::addToDocumentCache($additionalStubs);
+        $this->assertEquals($additionalStubs->keyBy('id'), $addTo);
+        $this->assertEquals($stubs->merge($additionalStubs)->keyBy('id'), Query::documentCache());
+
+        $clear = Query::clearDocumentCache();
+        $this->assertEquals(collect(), $clear);
+        $this->assertEquals(collect(), Query::documentCache());
+    }
+
+    public function test_cache_can_chain()
+    {
+        $this->assertInstanceOf(Query::class, Query::make()->cache());
+    }
+
+    public function test_dont_cache_can_chain()
+    {
+        $this->assertInstanceOf(Query::class, Query::make()->dontCache());
     }
 
     public function test_type_can_chain()
@@ -38,6 +89,22 @@ class QueryTest extends TestCase
         $result = $query->find(1);
         $this->assertInstanceOf(DocumentAStub::class, $result);
         Prismic::$documents = [];
+    }
+
+    public function test_find_adds_to_cache()
+    {
+        $this->assertSingleAddedToCache(function () {
+            $expectedPredicates = Query::make()->where('id', 1)->toPredicates();
+            $query = $this->mockApiQuery($expectedPredicates, [], $this->mockRawStubSingle());
+            $query->cache()->find(1);
+        });
+    }
+
+    public function test_find_uses_cache()
+    {
+        $this->assertUsesCache(function ($query) {
+            return $query->find(2);
+        });
     }
 
     public function test_find_many()
@@ -59,6 +126,23 @@ class QueryTest extends TestCase
         Prismic::$documents = [];
     }
 
+    public function test_find_many_adds_to_cache()
+    {
+        $this->assertManyAddedToCache(function () {
+            $expectedPredicates = Query::make()->where('id', 'in', [1, 2, 3])->toPredicates();
+            $expectedOptions = ['pageSize' => 100, 'page' => 1];
+            $query = $this->mockApiQuery($expectedPredicates, $expectedOptions, $this->mockRawStubMany());
+            $query->cache()->findMany([1, 2, 3]);
+        });
+    }
+
+    public function test_find_many_uses_cache()
+    {
+        $this->assertUsesCache(function ($query) {
+            return $query->findMany([2, 3])->toArray();
+        });
+    }
+
     public function test_single()
     {
         $this->assertNull(Query::make()->single());
@@ -71,6 +155,23 @@ class QueryTest extends TestCase
         $result = $query->single();
         $this->assertInstanceOf(DocumentAStub::class, $result);
         Prismic::$documents = [];
+    }
+
+    public function test_single_adds_to_cache()
+    {
+        $this->assertSingleAddedToCache(function () {
+            $expectedPredicates = Query::make()->where('type', 'document_a')->toPredicates();
+            $query = $this->mockApiQuery($expectedPredicates, [], $this->mockRawStubSingle());
+            $query->type('document_a');
+            $query->cache()->single(1);
+        });
+    }
+
+    public function test_single_uses_cache()
+    {
+        $this->assertUsesCache(function ($query) {
+            return $query->single();
+        });
     }
 
     public function test_where_can_chain()
@@ -126,6 +227,14 @@ class QueryTest extends TestCase
         Prismic::$documents = [];
     }
 
+    public function test_get_adds_to_cache()
+    {
+        $this->assertManyAddedToCache(function () {
+            $query = $this->mockApiQuery([], ['pageSize' => 100, 'page' => 1], $this->mockRawStubMany());
+            $query->cache()->get();
+        });
+    }
+
     public function test_first()
     {
         $query = $this->mockApiQuery([], [], $this->mockRawStubMany());
@@ -134,6 +243,14 @@ class QueryTest extends TestCase
         $result = $query->first();
         $this->assertInstanceOf(DocumentAStub::class, $result);
         Prismic::$documents = [];
+    }
+
+    public function test_first_adds_to_cache()
+    {
+        $this->assertSingleAddedToCache(function () {
+            $query = $this->mockApiQuery([], [], $this->mockRawStubMany());
+            $query->cache()->first(1);
+        });
     }
 
     public function test_chunk()
@@ -192,6 +309,16 @@ class QueryTest extends TestCase
         });
     }
 
+    public function test_chunk_adds_to_cache()
+    {
+        $this->assertManyAddedToCache(function () {
+            $query = $this->mockApiQuery([], ['pageSize' => 100, 'page' => 1], $this->mockRawStubMany());
+            $query->cache()->chunk(100, function () {
+                // do nothing
+            });
+        });
+    }
+
     public function test_to_predicates()
     {
         $predicates = Query::make()
@@ -219,6 +346,52 @@ class QueryTest extends TestCase
     {
         $this->swap(Api::class, 'foobar');
         $this->assertEquals('foobar', Query::make()->api());
+    }
+
+    protected function assertUsesCache(callable $callback)
+    {
+        Prismic::documents([DocumentAStub::class, DocumentBStub::class]);
+        $query = $this->mockApiQuery([], ['pageSize' => 100, 'page' => 1], $this->mockRawStubMany());
+        $query->cache()->get();
+
+        $query = m::mock(Query::class . '[api]');
+        $query->shouldReceive('api')->never();
+        $results = Arr::wrap($callback($query));
+
+        foreach ($results as $result) {
+            $this->assertEquals($result, Query::documentCache()->get($result->id));
+        }
+
+        Query::clearDocumentCache();
+        Prismic::$documents = [];
+    }
+
+    protected function assertSingleAddedToCache(callable $callback)
+    {
+        $this->assertEmpty(Query::documentCache());
+
+        Prismic::documents([DocumentAStub::class]);
+        $callback();
+        $cache = Query::documentCache();
+        $this->assertCount(1, $cache);
+        $this->assertInstanceOf(DocumentAStub::class, $cache[1]);
+        Query::clearDocumentCache();
+        Prismic::$documents = [];
+    }
+
+    protected function assertManyAddedToCache(callable $callback)
+    {
+        $this->assertEmpty(Query::documentCache());
+
+        Prismic::documents([DocumentAStub::class, DocumentBStub::class]);
+        $callback();
+        $cache = Query::documentCache();
+        $this->assertCount(3, $cache);
+        $this->assertInstanceOf(DocumentAStub::class, $cache[1]);
+        $this->assertInstanceOf(DocumentAStub::class, $cache[2]);
+        $this->assertInstanceOf(DocumentBStub::class, $cache[3]);
+        Query::clearDocumentCache();
+        Prismic::$documents = [];
     }
 
     protected function mockApiQuery($expectedPredicates, $expectedOptions, $return)
