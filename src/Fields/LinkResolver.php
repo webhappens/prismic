@@ -3,7 +3,6 @@
 namespace WebHappens\Prismic\Fields;
 
 use WebHappens\Prismic\Query;
-use Illuminate\Support\Collection;
 
 class LinkResolver
 {

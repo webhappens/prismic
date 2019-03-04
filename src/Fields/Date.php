@@ -3,7 +3,6 @@
 namespace WebHappens\Prismic\Fields;
 
 use Carbon\Carbon;
-use Illuminate\Support\HtmlString;
 use Prismic\Dom\Date as PrismicDate;
 use Illuminate\Contracts\Support\Htmlable;
 
@@ -33,11 +32,9 @@ class Date implements Htmlable
         return $this;
     }
 
-    public function toHtml(): HtmlString
+    public function toHtml()
     {
-        return new HtmlString(
-            (resolve(DateHtmlSerializer::class))->serialize($this)
-        );
+        return (resolve(DateHtmlSerializer::class))->serialize($this);
     }
 
     public function __toString()

@@ -46,7 +46,8 @@ class Query
 
     public static function addToDocumentCache(Collection $documents): Collection
     {
-        static::setDocumentCache(static::documentCache()->merge($documents->keyBy('id')));
+        $documents = $documents->keyBy('id');
+        static::setDocumentCache(static::documentCache()->merge($documents));
 
         return $documents;
     }
