@@ -169,7 +169,7 @@ class Traverser
 
     }
 
-    public function siblingsBefore() : Collection
+    public function siblingsBefore(): Collection
     {
         return $this->siblingsAndSelf()->slice(0, $this->siblingsPosition());
     }
