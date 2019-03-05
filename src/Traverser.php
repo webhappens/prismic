@@ -17,19 +17,9 @@ class Traverser
     protected $document;
     protected $relations = [];
 
-    public static function make($target = null)
+    public static function make(...$parameters)
     {
-        if (is_null($target)) {
-            $target = collect(debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 3))
-                ->map(function($trace) {
-                    return data_get($trace, 'object');
-                })
-                ->first(function($object) {
-                    return $object && $object instanceof Document;
-                });
-        }
-
-        return new static($target);
+        return new static(...$parameters);
     }
 
     public function __construct(Document $document, $relations = [])
