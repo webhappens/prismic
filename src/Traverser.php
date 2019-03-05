@@ -69,7 +69,7 @@ class Traverser
                 return $class && get_class($document) != $class;
             })
             ->first(function ($document) {
-                return static::make($document)->children()
+                return static::make($document, $this->relations)->children()
                     ->first(function ($document) {
                         return $this->is($document);
                     });
@@ -85,7 +85,7 @@ class Traverser
     {
         return $this->query->documentCache()
             ->filter(function ($document) {
-                return $parent = static::make($document)->parent()
+                return $parent = static::make($document, $this->relations)->parent()
                     && $this->is($parent);
             });
     }
@@ -139,7 +139,7 @@ class Traverser
             return collect();
         }
 
-        return $parent->children();
+        return static::make($parent, $this->relations)->children();
     }
 
     public function siblingsNext(): ?Document
@@ -173,7 +173,7 @@ class Traverser
 
     protected function is($document): bool
     {
-        $id = static::make($document)->id();
+        $id = static::make($document, $this->relations)->id();
 
         if (is_null($id)) {
             return false;
