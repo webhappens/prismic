@@ -12,8 +12,7 @@ use Illuminate\Support\Traits\ForwardsCalls;
 abstract class Document implements ArrayAccess
 {
     use HasAttributes,
-        ForwardsCalls,
-        Traversable;
+        ForwardsCalls;
 
     protected static $type;
 

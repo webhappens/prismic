@@ -2,124 +2,105 @@
 
 namespace WebHappens\Prismic;
 
+use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
 
 class Traverser
 {
+    public static $defaultRelations = [
+        'id' => 'id',
+        'parent' => 'parent',
+        'children' => 'children',
+    ];
+
     protected $query;
     protected $document;
-    protected $parentId;
-    protected $childrenIds;
-    protected $parentMethods;
-    protected $childrenMethods;
+    protected $relations = [];
 
-    public function __construct($document)
+    public static function make(...$parameters)
+    {
+        return new static(...$parameters);
+    }
+
+    public function __construct(Document $document, $relations = [])
     {
         $this->document = $document;
 
         $this->query = Query::eagerLoadAll();
 
-        $this->parentMethods = collect(
-            array_fill_keys(Prismic::$documents, 'parent')
-        );
-
-        $this->childrenMethods = collect(
-            array_fill_keys(Prismic::$documents, 'children')
-        );
+        $this->relations = collect($relations);
     }
 
-    public function setParentId($id): Traverser
-    {
-        $this->parentId = $id;
+    public function for($class, $parent = null, $children = null, $id = null) {
+        $this->relations->put($class, array_filter(compact('parent', 'children', 'id')));
 
         return $this;
     }
 
-    public function setChildrenIds($ids): Traverser
+    public function parentFor($class, $parent)
     {
-        $this->childrenIds = collect($ids);
-
-        return $this;
+        return $this->for($class, $parent, null, null);
     }
 
-    public function setParentMethods($methods): Traverser
+    public function childrenFor($class, $children)
     {
-        $this->parentMethods->merge($methods);
-
-        return $this;
+        return $this->for($class, null, $children, null);
     }
 
-    public function setChildrenMethods(array $methods): Traverser
+    public function idFor($class, $id)
     {
-        $this->childrenMethods->merge($methods);
+        return $this->for($class, null, null, $id);
+    }
 
-        return $this;
+    public function id()
+    {
+        return $this->resolveRelation('id');
     }
 
     public function parent(): ?Document
     {
-        if ($this->parentId === false) {
-            return null;
-        }
-
-        if ($this->parentId) {
-            return $this->getParentFromId();
-        }
-
-        return $this->getParentFromChildren();
+        return $this->resolveRelation('parent');
     }
 
-    protected function getParentFromId(): ?Document
+    public function findParent($class = null): ?Document
     {
-        return $this->query->find($this->parentId);
-    }
-
-    protected function getParentFromChildren(): ?Document
-    {
-        return $this->query->documentCache()->first(function ($document) {
-            $childrenMethod = $this->getChildrenMethod($document);
-
-            if (method_exists($document, $childrenMethod)) {
-                return $document->{$childrenMethod}()
-                    ->filter()
+        return $this->query->documentCache()
+            ->reject(function ($document) use ($class) {
+                return $class && get_class($document) != $class;
+            })
+            ->first(function ($document) {
+                return static::make($document, $this->relations)->children()
                     ->first(function ($document) {
-                        return $document->id == $this->document->id;
+                        return $this->is($document);
                     });
-            }
         });
     }
 
     public function children(): Collection
     {
-        if ($this->childrenIds === false) {
-            return collect();
-        }
-
-        if (count($this->childrenIds)) {
-            return $this->getChildrenFromIds();
-        }
-
-        return $this->getChildrenFromParent();
+        return $this->resolveRelation('children', collect());
     }
 
-    protected function getChildrenFromIds(): Collection
+    protected function findChildren(): Collection
     {
-        return $this->childrenIds->map(function($id) {
-            return $this->query->find($id);
-        });
-    }
-
-    protected function getChildrenFromParent(): Collection
-    {
-        // @todo
-        return collect();
+        return $this->query->documentCache()
+            ->filter(function ($document) {
+                return $parent = static::make($document, $this->relations)->parent()
+                    && $this->is($parent);
+            });
     }
 
     public function ancestors(): Collection
     {
-        return $this->getAncestors()->map(function($id) {
-            return $this->query->find($id);
-        });
+        $ancestors = collect();
+
+        if ($parent = $this->parent()) {
+            $ancestors->prepend($parent);
+
+            $ancestors = static::make($parent, $this->relations)->ancestors()->merge($ancestors);
+        }
+
+        return $ancestors;
     }
 
     public function ancestorsAndSelf(): Collection
@@ -127,26 +108,17 @@ class Traverser
         return $this->ancestors()->push($this->document);
     }
 
-    protected function getAncestors(): Collection
-    {
-        $ancestors = collect();
-
-        $parentMethod = $this->getParentMethod($this->document);
-
-        if ($parent = $this->document->{$parentMethod}()) {
-            $ancestors->prepend($parent->id);
-
-            $ancestors = (new static($parent))->getAncestors()->merge($ancestors);
-        }
-
-        return $ancestors;
-    }
-
     public function descendants(): Collection
     {
-        return $this->getDescendants()->map(function($id) {
-            return $this->query->find($id);
+        $descendants = collect();
+
+        $this->children()->each(function($child) use ($descendants) {
+            $descendants = $descendants
+                ->push($child)
+                ->merge((static::make($child, $this->relations))->descendants());
         });
+
+        return $descendants;
     }
 
     public function descendantsAndSelf(): Collection
@@ -154,27 +126,10 @@ class Traverser
         return $this->descendants()->prepend($this->document);
     }
 
-    protected function getDescendants(): Collection
-    {
-        $descendants = collect();
-
-        $childrenMethod = $this->getChildrenMethod($this->document);
-
-        if ($children = $this->document->{$childrenMethod}()) {
-            foreach ($children as $child) {
-                $descendants = $descendants
-                    ->push($child->id)
-                    ->merge($child->traverse()->getDescendants());
-            }
-        }
-
-        return $descendants;
-    }
-
     public function siblings(): Collection
     {
         return $this->siblingsAndSelf()->reject(function ($document) {
-            return $document->id == $this->document->id;
+            return $this->is($document);
         });
     }
 
@@ -184,16 +139,71 @@ class Traverser
             return collect();
         }
 
-        return $parent->children();
+        return static::make($parent, $this->relations)->children();
     }
 
-    protected function getParentMethod(Document $document)
+    public function siblingsNext(): ?Document
     {
-        return $this->parentMethods->get(get_class($document));
+        return $this->siblingsAfter()->first();
     }
 
-    protected function getChildrenMethod(Document $document)
+    public function siblingsAfter(): Collection
     {
-        return $this->childrenMethods->get(get_class($document));
+        return $this->siblingsAndSelf()->slice($this->siblingsPosition()+1);
+
+    }
+
+    public function siblingsPrevious(): ?Document
+    {
+        return $this->siblingsBefore()->last();
+
+    }
+
+    public function siblingsBefore(): Collection
+    {
+        return $this->siblingsAndSelf()->slice(0, $this->siblingsPosition());
+    }
+
+    public function siblingsPosition()
+    {
+        return $this->siblingsAndSelf()->search(function ($sibling, $key) {
+            return $this->is($sibling);
+        });
+    }
+
+    protected function is($document): bool
+    {
+        $id = static::make($document, $this->relations)->id();
+
+        if (is_null($id)) {
+            return false;
+        }
+
+        return $id === $this->id();
+    }
+
+    protected function resolveRelation($relation, $default = null) {
+        $relation = $this->getRelation($relation);
+
+        if ( ! $relation) {
+            return $default;
+        }
+
+        if (method_exists($this->document, $relation)) {
+            return $this->document->$relation();
+        }
+
+        if (isset($this->document, $relation)) {
+            return $this->document->$relation;
+        }
+
+        return $default;
+    }
+
+    protected function getRelation($relation)
+    {
+        $localRelations = collect($this->relations->get(get_class($this->document)));
+
+        return $localRelations->get($relation, static::$defaultRelations[$relation]);
     }
 }
