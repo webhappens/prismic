@@ -31,7 +31,7 @@ class Cache implements CacheInterface
 
     public function set($key, $value, $ttl = 0)
     {
-        $this->cache->put($key, $value, $ttl / 60);
+        $this->cache->put($key, $value, now()->addSeconds($ttl));
     }
 
     public function delete($key)
