@@ -193,7 +193,7 @@ class Traverser
             return $this->document->$relation();
         }
 
-        if (isset($this->document, $relation)) {
+        if (isset($this->document->$relation)) {
             return $this->document->$relation;
         }
 
