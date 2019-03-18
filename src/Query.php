@@ -54,7 +54,7 @@ class Query
 
     public static function documentCache()
     {
-        return collect(static::$cachedDocuments);
+        return collect(static::$cachedDocuments)->filter();
     }
 
     public function cache(): Query

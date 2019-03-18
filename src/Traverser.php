@@ -78,7 +78,7 @@ class Traverser
 
     public function children(): Collection
     {
-        return $this->resolveRelation('children', collect());
+        return $this->resolveRelation('children', collect())->filter();
     }
 
     protected function findChildren(): Collection
