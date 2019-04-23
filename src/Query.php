@@ -5,17 +5,16 @@ namespace WebHappens\Prismic;
 use stdClass;
 use Prismic\Api;
 use Prismic\Predicates;
-use Illuminate\Support\Str;
 use InvalidArgumentException;
 use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
 
 class Query
 {
-    use HasCaching;
+    use HasWheres,
+        HasCaching;
 
     protected $type;
-    protected $wheres = [];
     protected $options = [];
 
     public static function make(): Query
@@ -57,7 +56,7 @@ class Query
                 });
         }
 
-        return $this->where('id', 'in', $ids)->get();
+        return $this->whereIn('id', $ids)->get();
     }
 
     public function single(): ?Document
@@ -67,30 +66,6 @@ class Query
         }
 
         return $this->first();
-    }
-
-    public function where($field, $predicate = null, $value = null): Query
-    {
-        if (func_num_args() === 2) {
-            $value = $predicate;
-            $predicate = 'at';
-        }
-
-        if (in_array($field, Document::getGlobalFieldKeys())) {
-            $field = 'document.' . $field;
-        } elseif ($this->type && ! Str::contains($field, '.')) {
-            $field = 'my.' . $this->type . '.' . $field;
-        } else {
-            $field = 'my.' . $field;
-        }
-
-        if ( ! method_exists(Predicates::class, $predicate)) {
-            throw new InvalidArgumentException('Illegal predicate and value combination.');
-        }
-
-        array_push($this->wheres, compact('field', 'predicate', 'value'));
-
-        return $this;
     }
 
     public function get(): Collection
@@ -131,13 +106,7 @@ class Query
 
     public function toPredicates(): array
     {
-        return collect($this->wheres)
-            ->map(function ($where) {
-                extract($where);
-
-                return Predicates::{$predicate}($field, $value);
-            })
-            ->toArray();
+        return $this->predicates;
     }
 
     public function getRaw(): stdClass
