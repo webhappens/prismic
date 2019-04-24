@@ -4,7 +4,7 @@ namespace WebHappens\Prismic;
 
 use stdClass;
 use Prismic\Api;
-use Prismic\Predicates;
+use Illuminate\Support\Arr;
 use InvalidArgumentException;
 use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
@@ -126,9 +126,9 @@ class Query
         return resolve(Api::class);
     }
 
-    protected function hydrateDocuments(...$results): Collection
+    protected function hydrateDocuments($results): Collection
     {
-        return collect($results)
+        return collect(Arr::wrap($results))
             ->flatten()
             ->filter()
             ->map(function ($result) {
