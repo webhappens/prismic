@@ -25,9 +25,7 @@ class Traverser
     public function __construct(Document $document, $relations = [])
     {
         $this->document = $document;
-
         $this->query = Query::eagerLoadAll();
-
         $this->relations = collect($relations);
     }
 
@@ -96,7 +94,6 @@ class Traverser
 
         if ($parent = $this->parent()) {
             $ancestors->prepend($parent);
-
             $ancestors = static::make($parent, $this->relations)->ancestors()->merge($ancestors);
         }
 

@@ -113,7 +113,7 @@ class QueryTest extends TestCase
         $this->assertInstanceOf(Collection::class, $results);
         $this->assertEmpty($results);
 
-        $expectedPredicates = Query::make()->where('id', 'in', [1, 2, 3])->toPredicates();
+        $expectedPredicates = Query::make()->whereIn('id', [1, 2, 3])->toPredicates();
         $expectedOptions = ['pageSize' => 100, 'page' => 1];
         $query = $this->mockApiQuery($expectedPredicates, $expectedOptions, $this->mockRawStubMany());
 
@@ -129,7 +129,7 @@ class QueryTest extends TestCase
     public function test_find_many_adds_to_cache()
     {
         $this->assertManyAddedToCache(function () {
-            $expectedPredicates = Query::make()->where('id', 'in', [1, 2, 3])->toPredicates();
+            $expectedPredicates = Query::make()->whereIn('id', [1, 2, 3])->toPredicates();
             $expectedOptions = ['pageSize' => 100, 'page' => 1];
             $query = $this->mockApiQuery($expectedPredicates, $expectedOptions, $this->mockRawStubMany());
             $query->cache()->findMany([1, 2, 3]);
@@ -192,7 +192,7 @@ class QueryTest extends TestCase
     public function test_where_without_type()
     {
         $predicates = Query::make()
-            ->where('example.name', 'in', ['ben', 'sam'])
+            ->whereIn('example.name', ['ben', 'sam'])
             ->toPredicates();
 
         $this->assertCount(1, $predicates);
@@ -203,7 +203,7 @@ class QueryTest extends TestCase
     {
         $predicates = Query::make()
             ->type('example')
-            ->where('name', 'in', ['ben', 'sam'])
+            ->whereIn('name', ['ben', 'sam'])
             ->where('example.foo', 'bar')
             ->toPredicates();
 
@@ -323,7 +323,7 @@ class QueryTest extends TestCase
     {
         $predicates = Query::make()
             ->where('id', '1')
-            ->where('example.name', 'in', ['ben', 'sam'])
+            ->whereIn('example.name', ['ben', 'sam'])
             ->toPredicates();
 
         $this->assertInternalType('array', $predicates);
