@@ -2,7 +2,6 @@
 
 namespace WebHappens\Prismic;
 
-use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
 
 class Traverser
@@ -13,8 +12,7 @@ class Traverser
         'children' => 'children',
     ];
 
-    protected $query;
-    protected $document;
+    protected $current;
     protected $relations = [];
 
     public static function make(...$parameters)
@@ -22,10 +20,9 @@ class Traverser
         return new static(...$parameters);
     }
 
-    public function __construct(Document $document, $relations = [])
+    public function __construct($current, $relations = [])
     {
-        $this->document = $document;
-        $this->query = Query::eagerLoadAll();
+        $this->current = $current;
         $this->relations = collect($relations);
     }
 
@@ -55,21 +52,21 @@ class Traverser
         return $this->resolveRelation('id');
     }
 
-    public function parent(): ?Document
+    public function parent()
     {
         return $this->resolveRelation('parent');
     }
 
-    public function findParent($class = null): ?Document
+    public function findParent($objects, $class = null)
     {
-        return $this->query->documentCache()
-            ->reject(function ($document) use ($class) {
-                return $class && get_class($document) != $class;
+        return collect($objects)
+            ->reject(function ($object) use ($class) {
+                return $class && get_class($object) != $class;
             })
-            ->first(function ($document) {
-                return static::make($document, $this->relations)->children()
-                    ->first(function ($document) {
-                        return $this->is($document);
+            ->first(function ($object) {
+                return static::make($object, $this->relations)->children()
+                    ->first(function ($object) {
+                        return $this->is($object);
                     });
         });
     }
@@ -79,11 +76,11 @@ class Traverser
         return $this->resolveRelation('children', collect())->filter();
     }
 
-    protected function findChildren(): Collection
+    protected function findChildren($objects): Collection
     {
-        return $this->query->documentCache()
-            ->filter(function ($document) {
-                return $parent = static::make($document, $this->relations)->parent()
+        return collect($objects)
+            ->filter(function ($object) {
+                return $parent = static::make($object, $this->relations)->parent()
                     && $this->is($parent);
             });
     }
@@ -102,7 +99,7 @@ class Traverser
 
     public function ancestorsAndSelf(): Collection
     {
-        return $this->ancestors()->push($this->document);
+        return $this->ancestors()->push($this->current);
     }
 
     public function descendants(): Collection
@@ -120,13 +117,13 @@ class Traverser
 
     public function descendantsAndSelf(): Collection
     {
-        return $this->descendants()->prepend($this->document);
+        return $this->descendants()->prepend($this->current);
     }
 
     public function siblings(): Collection
     {
-        return $this->siblingsAndSelf()->reject(function ($document) {
-            return $this->is($document);
+        return $this->siblingsAndSelf()->reject(function ($object) {
+            return $this->is($object);
         });
     }
 
@@ -139,7 +136,7 @@ class Traverser
         return static::make($parent, $this->relations)->children();
     }
 
-    public function siblingsNext(): ?Document
+    public function siblingsNext()
     {
         return $this->siblingsAfter()->first();
     }
@@ -150,7 +147,7 @@ class Traverser
 
     }
 
-    public function siblingsPrevious(): ?Document
+    public function siblingsPrevious()
     {
         return $this->siblingsBefore()->last();
 
@@ -168,9 +165,9 @@ class Traverser
         });
     }
 
-    protected function is($document): bool
+    protected function is($object): bool
     {
-        $id = static::make($document, $this->relations)->id();
+        $id = static::make($object, $this->relations)->id();
 
         if (is_null($id)) {
             return false;
@@ -186,12 +183,12 @@ class Traverser
             return $default;
         }
 
-        if (method_exists($this->document, $relation)) {
-            return $this->document->$relation();
+        if (method_exists($this->current, $relation)) {
+            return $this->current->$relation();
         }
 
-        if (isset($this->document->$relation)) {
-            return $this->document->$relation;
+        if (isset($this->current->$relation)) {
+            return $this->current->$relation;
         }
 
         return $default;
@@ -199,7 +196,7 @@ class Traverser
 
     protected function getRelation($relation)
     {
-        $localRelations = collect($this->relations->get(get_class($this->document)));
+        $localRelations = collect($this->relations->get(get_class($this->current)));
 
         return $localRelations->get($relation, static::$defaultRelations[$relation]);
     }
