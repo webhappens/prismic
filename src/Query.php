@@ -8,6 +8,8 @@ use Illuminate\Support\Arr;
 use InvalidArgumentException;
 use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
+use Illuminate\Pagination\Paginator;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class Query
 {
@@ -84,6 +86,49 @@ class Query
         $records = $this->hydrateDocuments(array_shift($this->getRaw()->results));
 
         return $this->shouldCache ? static::addToDocumentCache($records)->first() : $records->first();
+    }
+
+    public function paginate($pageSize = 25, $page = 1)
+    {
+        if ($pageSize > 100) {
+            throw new InvalidArgumentException('The maximum chunk limit allowed by Prismic is 100');
+        }
+
+        $response = $this->options(compact('pageSize', 'page'))->getRaw();
+        $results = $this->hydrateDocuments($response->results);
+
+        if ($this->shouldCache) {
+            static::addToDocumentCache($results);
+        }
+
+        return new LengthAwarePaginator(
+            $results,
+            $response->total_results_size,
+            $pageSize,
+            $page,
+            ['path'  => request()->url(), 'query' => request()->query()]
+        );
+    }
+
+    public function simplePaginate($pageSize = 25, $page = 1)
+    {
+        if ($pageSize > 100) {
+            throw new InvalidArgumentException('The maximum chunk limit allowed by Prismic is 100');
+        }
+
+        $response = $this->options(compact('pageSize', 'page'))->getRaw();
+        $results = $this->hydrateDocuments($response->results);
+
+        if ($this->shouldCache) {
+            static::addToDocumentCache($results);
+        }
+
+        return new Paginator(
+            $results,
+            $pageSize,
+            $page,
+            ['path'  => request()->url(), 'query' => request()->query()]
+        );
     }
 
     public function chunk($pageSize, callable $callback)
