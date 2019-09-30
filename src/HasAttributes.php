@@ -2,6 +2,7 @@
 
 namespace WebHappens\Prismic;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 trait HasAttributes
@@ -29,7 +30,7 @@ trait HasAttributes
 
     public function getAttributeValue($key)
     {
-        $value = array_get($this->attributes, $key);
+        $value = Arr::get($this->attributes, $key);
 
         if ($this->hasAttributeAccessor($key)) {
             return $this->callAttributeAccessor($key, $value);
