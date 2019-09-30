@@ -241,7 +241,7 @@ trait HasWheres
 
     protected function resolveFieldName($field)
     {
-        if (in_array($field, Document::getGlobalFieldKeys())) {
+        if ($field != 'uid' && in_array($field, Document::getGlobalFieldKeys())) {
             return 'document.' . $field;
         } elseif ($this->type && ! Str::contains($field, '.')) {
             return 'my.' . $this->type . '.' . $field;
