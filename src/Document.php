@@ -4,6 +4,7 @@ namespace WebHappens\Prismic;
 
 use stdClass;
 use ArrayAccess;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use WebHappens\Prismic\Fields\Date;
 use WebHappens\Prismic\Fields\RichText;
@@ -82,7 +83,7 @@ abstract class Document implements ArrayAccess
 
     public function getSlices($types = []): Collection
     {
-        $types = array_wrap($types);
+        $types = Arr::wrap($types);
         $slices = collect($this->body ?? []);
 
         if (count($types)) {
