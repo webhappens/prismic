@@ -3,9 +3,7 @@
 namespace WebHappens\Prismic;
 
 use Prismic\Predicates;
-use Illuminate\Support\Str;
 use WebHappens\Prismic\Query;
-use WebHappens\Prismic\Document;
 
 trait HasWheres
 {
@@ -237,16 +235,5 @@ trait HasWheres
         array_push($this->predicates, Predicates::near($field, $latitude, $longitude, $radius));
 
         return $this;
-    }
-
-    protected function resolveFieldName($field)
-    {
-        if ($field != 'uid' && in_array($field, Document::getGlobalFieldKeys())) {
-            return 'document.' . $field;
-        } elseif ($this->type && ! Str::contains($field, '.')) {
-            return 'my.' . $this->type . '.' . $field;
-        } else {
-            return 'my.' . $field;
-        }
     }
 }

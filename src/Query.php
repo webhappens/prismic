@@ -5,6 +5,7 @@ namespace WebHappens\Prismic;
 use stdClass;
 use Prismic\Api;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
@@ -14,6 +15,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 class Query
 {
     use HasWheres,
+        HasOrderings,
         HasCaching;
 
     protected $type;
@@ -156,7 +158,7 @@ class Query
 
     public function getRaw(): stdClass
     {
-        return $this->api()->query($this->toPredicates(), $this->options);
+        return $this->api()->query($this->toPredicates(), $this->getOptions());
     }
 
     public function options(array $options = []): Query
@@ -164,6 +166,15 @@ class Query
         $this->options = array_merge($this->options, $options);
 
         return $this;
+    }
+
+    public function getOptions()
+    {
+        if ($this->orderings) {
+            $this->options(['orderings' => '[' . implode(',', $this->orderings) . ']']);
+        }
+
+        return $this->options;
     }
 
     public function api()
@@ -179,5 +190,16 @@ class Query
             ->map(function ($result) {
                 return Document::newHydratedInstance($result);
             });
+    }
+
+    protected function resolveFieldName($field)
+    {
+        if ($field != 'uid' && in_array($field, Document::getGlobalFieldKeys())) {
+            return 'document.' . $field;
+        } elseif ($this->type && ! Str::contains($field, '.')) {
+            return 'my.' . $this->type . '.' . $field;
+        } else {
+            return 'my.' . $field;
+        }
     }
 }

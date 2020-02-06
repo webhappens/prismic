@@ -415,6 +415,32 @@ class QueryTest extends TestCase
         });
     }
 
+    public function test_order_by()
+    {
+        $query = Query::make()->type('example')->orderBy('id')->orderByDesc('foo');
+        $orderings = '[document.id,my.example.foo desc]';
+
+        $this->assertEquals(
+            $query->getOptions(),
+            ['orderings' => $orderings]
+        );
+
+        $this->assertEquals(
+            $query->options(['pageSize' => 100])->getOptions(),
+            [
+                'orderings' => $orderings,
+                'pageSize' => 100,
+            ]
+        );
+    }
+
+    public function test_order_by_invalid_direction()
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Query::make()->orderBy('id', 'asce');
+    }
+
     public function test_chunk()
     {
         $rawStubs = [
@@ -502,6 +528,16 @@ class QueryTest extends TestCase
     public function test_options_can_chain()
     {
         $this->assertInstanceOf(Query::class, Query::make()->options([]));
+    }
+
+    public function test_options()
+    {
+        $options = Query::make()
+            ->options(['foo' => 'a', 'bar' => 'b'])
+            ->options(['baz' => 'c'])
+            ->getOptions();
+
+        $this->assertEquals(['foo' => 'a', 'bar' => 'b', 'baz' => 'c'], $options);
     }
 
     public function test_api_returns_prismic_api_instance()
