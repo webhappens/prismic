@@ -37,6 +37,11 @@ class Date implements Htmlable
         return (resolve(DateHtmlSerializer::class))->serialize($this);
     }
 
+    public function asCarbon()
+    {
+        return $this->carbon;
+    }
+
     public function __toString()
     {
         return $this->stringValue;

@@ -30,6 +30,12 @@ class DateFieldTest extends TestCase
         );
     }
 
+    public function test_as_carbon()
+    {
+        $carbon = Carbon::now();
+        $this->assertEquals($carbon, Date::make($carbon)->asCarbon());
+    }
+
     public function test_can_use_carbon_methods()
     {
         $this->assertEquals(
