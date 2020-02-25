@@ -19,7 +19,7 @@ class PrismicTest extends TestCase
         ];
 
         Prismic::documents($documents);
-        $this->assertArraySubset($documents, Prismic::$documents);
+        $this->assertEquals($documents, Prismic::$documents);
         Prismic::$documents = [];
     }
 
@@ -31,7 +31,7 @@ class PrismicTest extends TestCase
         ];
 
         Prismic::slices($slices);
-        $this->assertArraySubset($slices, Prismic::$slices);
+        $this->assertEquals($slices, Prismic::$slices);
         Prismic::$slices = [];
     }
 

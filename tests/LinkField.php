@@ -19,12 +19,19 @@ class LinkField extends TestCase
     public function assertCanOpenInNewTab($link)
     {
         $this->assertEmpty($link->getAttributes());
+
         $link->openInNewTab();
-        $this->assertArraySubset(['target' => '_blank'], $link->getAttributes());
+        $linkAttributes = $link->getAttributes();
+        $this->assertArrayHasKey('target', $linkAttributes);
+        $this->assertSame('_blank', $linkAttributes['target']);
+
         $link->openInNewTab(false);
         $this->assertEmpty($link->getAttributes());
+
         $link->openInNewTab(true);
-        $this->assertArraySubset(['target' => '_blank'], $link->getAttributes());
+        $linkAttributes = $link->getAttributes();
+        $this->assertArrayHasKey('target', $linkAttributes);
+        $this->assertSame('_blank', $linkAttributes['target']);
     }
 
     public function assertCanSetAttributes($link)

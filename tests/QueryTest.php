@@ -514,7 +514,7 @@ class QueryTest extends TestCase
             ->whereIn('example.name', ['ben', 'sam'])
             ->toPredicates();
 
-        $this->assertInternalType('array', $predicates);
+        $this->assertIsArray($predicates);
         $this->assertCount(2, $predicates);
         $this->assertContainsOnlyInstancesOf(SimplePredicate::class, $predicates);
     }

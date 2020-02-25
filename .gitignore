@@ -1,2 +1,3 @@
 vendor
-composer.lockx
+composer.lock
+.phpunit.result.cache
