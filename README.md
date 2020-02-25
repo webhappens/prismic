@@ -1,3 +1,5 @@
+![tests](https://github.com/webhappens/prismic/workflows/tests/badge.svg)
+
 # A Laravel wrapper for Prismic.io
 
 This package makes it super quick and easy to work with Prismic.io in Laravel.
