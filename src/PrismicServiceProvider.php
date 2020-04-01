@@ -25,6 +25,9 @@ class PrismicServiceProvider extends ServiceProvider
             return \Prismic\Api::get($config['url'], $config['access_token'], null, $cache);
         });
 
+        $this->app->singleton(\WebHappens\Prismic\DocumentResolver::class);
+        $this->app->singleton(\WebHappens\Prismic\SliceResolver::class);
+
         $this->app->bind(\WebHappens\Prismic\Contracts\Fields\RichTextHtmlSerializer::class, \WebHappens\Prismic\Fields\RichTextHtmlSerializer::class);
         $this->app->bind(\WebHappens\Prismic\Contracts\Fields\LinkHtmlSerializer::class, \WebHappens\Prismic\Fields\LinkHtmlSerializer::class);
         $this->app->bind(\WebHappens\Prismic\Contracts\Fields\DateHtmlSerializer::class, \WebHappens\Prismic\Fields\DateHtmlSerializer::class);

@@ -10,6 +10,7 @@ use WebHappens\Prismic\Slice;
 use WebHappens\Prismic\Prismic;
 use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
+use Facades\WebHappens\Prismic\DocumentResolver;
 use WebHappens\Prismic\Tests\Stubs\SliceAStub;
 use WebHappens\Prismic\Tests\Stubs\SliceBStub;
 use WebHappens\Prismic\Tests\Stubs\DocumentAStub;
@@ -29,7 +30,7 @@ class DocumentTest extends TestCase
 
     public function test_get_global_field_keys()
     {
-        $this->assertEquals(DocumentAStub::getGlobalFieldKeys(), [
+        $this->assertEquals(DocumentResolver::getGlobalFieldKeys(), [
             'id', 'uid', 'type', 'href', 'tags', 'first_publication_date',
             'last_publication_date', 'lang', 'alternate_languages',
         ]);
@@ -38,14 +39,16 @@ class DocumentTest extends TestCase
     public function test_resolve_class_from_type()
     {
         Prismic::documents([DocumentAStub::class, DocumentBStub::class]);
-        $this->assertEquals(DocumentAStub::class, Document::resolveClassFromType('document_a'));
-        $this->assertEquals(DocumentBStub::class, Document::resolveClassFromType('document_b'));
+        $this->assertInstanceOf(DocumentAStub::class, DocumentResolver::resolve('document_a', []));
+        $this->assertInstanceOf(DocumentBStub::class, DocumentResolver::resolve('document_b', []));
+        $this->assertInstanceOf(DocumentAStub::class, DocumentResolver::resolve(['type' => 'document_a']));
+        $this->assertInstanceOf(DocumentBStub::class, DocumentResolver::resolve(['type' => 'document_b']));
         Prismic::$documents = [];
     }
 
     public function test_new_hydrated_instance()
     {
-        $this->assertNull(Document::newHydratedInstance(new stdClass));
+        $this->assertNull(Prismic::documentResolver(new stdClass));
 
         $resultStub = (object) [
             'type' => 'document_a',
@@ -57,7 +60,7 @@ class DocumentTest extends TestCase
         ];
 
         Prismic::documents([DocumentAStub::class]);
-        $document = Document::newHydratedInstance($resultStub);
+        $document = Prismic::documentResolver($resultStub);
         $this->assertInstanceOf(DocumentAStub::class, $document);
         $this->assertEquals('1', $document->id);
         $this->assertEquals('bar', $document->foo);

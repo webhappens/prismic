@@ -4,6 +4,7 @@ namespace WebHappens\Prismic\Tests;
 
 use WebHappens\Prismic\Slice;
 use WebHappens\Prismic\Prismic;
+use Facades\WebHappens\Prismic\SliceResolver;
 use WebHappens\Prismic\Tests\Stubs\SliceAStub;
 use WebHappens\Prismic\Tests\Stubs\SliceBStub;
 
@@ -17,8 +18,10 @@ class SliceTest extends TestCase
     public function test_resolve_class_from_type()
     {
         Prismic::slices([SliceAStub::class, SliceBStub::class]);
-        $this->assertEquals(SliceAStub::class, Slice::resolveClassFromType('slice_a'));
-        $this->assertEquals(SliceBStub::class, Slice::resolveClassFromType('slice_b'));
+        $this->assertInstanceOf(SliceAStub::class, SliceResolver::resolve('slice_a', []));
+        $this->assertInstanceOf(SliceBStub::class, SliceResolver::resolve('slice_b', []));
+        $this->assertInstanceOf(SliceAStub::class, SliceResolver::resolve(['slice_type' => 'slice_a']));
+        $this->assertInstanceOf(SliceBStub::class, SliceResolver::resolve(['slice_type' => 'slice_b']));
         Prismic::$slices = [];
     }
 

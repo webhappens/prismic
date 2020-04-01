@@ -3,7 +3,6 @@
 namespace WebHappens\Prismic;
 
 use Prismic\Api;
-use BadMethodCallException;
 use Illuminate\Http\RedirectResponse;
 use WebHappens\Prismic\DocumentUrlResolver;
 
@@ -24,6 +23,24 @@ class Prismic
         static::$slices = array_merge(static::$slices, $slices);
 
         return new static;
+    }
+
+    public static function documentResolver(...$args)
+    {
+        if ($args) {
+            return resolve(DocumentResolver::class)->resolve(...$args);
+        }
+
+        return resolve(DocumentResolver::class);
+    }
+
+    public static function sliceResolver(...$args)
+    {
+        if ($args) {
+            return resolve(SliceResolver::class)->resolve(...$args);
+        }
+
+        return resolve(SliceResolver::class);
     }
 
     public static function preview($token): RedirectResponse

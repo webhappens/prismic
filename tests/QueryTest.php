@@ -37,12 +37,14 @@ class QueryTest extends TestCase
 
     public function test_interaction_with_document_cache()
     {
+        Prismic::documents([DocumentAStub::class, DocumentBStub::class]);
+
         $this->assertEmpty(Query::documentCache());
 
         $stubs = collect([
-            ['id' => '1', 'foo' => 'bar'],
-            ['id' => '2', 'foo' => 'bar'],
-            ['id' => '3', 'foo' => 'bar'],
+            Prismic::documentResolver('document_a', ['id' => '1', 'foo' => 'bar']),
+            Prismic::documentResolver('document_a', ['id' => '2', 'foo' => 'bar']),
+            Prismic::documentResolver('document_b', ['id' => '3', 'foo' => 'bar']),
         ]);
 
         $set = Query::setDocumentCache($stubs);
@@ -50,8 +52,8 @@ class QueryTest extends TestCase
         $this->assertEquals($stubs->keyBy('id'), Query::documentCache());
 
         $additionalStubs = collect([
-            ['id' => '4', 'foo' => 'bar'],
-            ['id' => '5', 'foo' => 'bar'],
+            Prismic::documentResolver('document_a', ['id' => '4', 'foo' => 'bar']),
+            Prismic::documentResolver('document_b', ['id' => '5', 'foo' => 'bar']),
         ]);
 
         $addTo = Query::addToDocumentCache($additionalStubs);
@@ -61,6 +63,8 @@ class QueryTest extends TestCase
         $clear = Query::clearDocumentCache();
         $this->assertEquals(collect(), $clear);
         $this->assertEquals(collect(), Query::documentCache());
+
+        Prismic::$documents = [];
     }
 
     public function test_cache_can_chain()

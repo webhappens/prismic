@@ -4,7 +4,6 @@ namespace WebHappens\Prismic;
 
 use stdClass;
 use ArrayAccess;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use WebHappens\Prismic\Fields\Date;
 use WebHappens\Prismic\Fields\RichText;
@@ -16,11 +15,6 @@ abstract class Document implements ArrayAccess
         ForwardsCalls;
 
     protected static $type;
-
-    protected static $globalFieldKeys = [
-        'id', 'uid', 'type', 'href', 'tags', 'first_publication_date',
-        'last_publication_date', 'lang', 'alternate_languages',
-    ];
 
     protected $globalMaps = [
         'href' => 'api_id',
@@ -38,37 +32,12 @@ abstract class Document implements ArrayAccess
 
     public static function make(): Document
     {
-        return new static;
+        return resolve(static::class);
     }
 
     public static function getType(): string
     {
         return static::$type;
-    }
-
-    public static function getGlobalFieldKeys(): array
-    {
-        return static::$globalFieldKeys;
-    }
-
-    public static function resolveClassFromType($type): ?string
-    {
-        foreach (Prismic::$documents as $document) {
-            if ($document::getType() == $type) {
-                return $document;
-            }
-        }
-
-        return null;
-    }
-
-    public static function newHydratedInstance(stdClass $result): ?Document
-    {
-        if ( ! $document = Document::resolveClassFromType(data_get($result, 'type'))) {
-            return null;
-        }
-
-        return $document::make()->hydrate($result);
     }
 
     public static function all(): Collection
@@ -83,7 +52,7 @@ abstract class Document implements ArrayAccess
 
     public function getSlices($types = []): Collection
     {
-        $types = Arr::wrap($types);
+        $types = is_array($types) ? $types : func_get_args();
         $slices = collect($this->body ?? []);
 
         if (count($types)) {
@@ -94,32 +63,17 @@ abstract class Document implements ArrayAccess
 
         return $slices
             ->map(function ($data) {
-                if ($slice = Slice::resolveClassFromType(data_get($data, 'slice_type'))) {
-                    return $slice::make($data);
-                }
+                return Prismic::sliceResolver($data);
             })
             ->filter();
     }
 
-    public function hydrate(stdClass $result)
+    public function hydrate(array $result)
     {
-        $attributes = [];
-
-        foreach (static::getGlobalFieldKeys() as $key) {
-            $attributes[$key] = data_get($result, $key);
-        }
-
-        $data = data_get($result, 'data', []);
-
-        foreach ($data as $key => $value) {
-            $attributes[$key] = $value;
-        }
-
         $maps = $this->getMaps();
 
-        foreach ($attributes as $key => $value) {
+        foreach ($result as $key => $value) {
             if (array_key_exists($key, $maps)) {
-                unset($attributes[$key]);
                 $key = $maps[$key];
             }
 

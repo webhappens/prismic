@@ -83,7 +83,7 @@ class Query
         return $results->flatten();
     }
 
-    public function first(): ?Document
+    public function first()
     {
         $records = $this->hydrateDocuments(array_shift($this->getRaw()->results));
 
@@ -188,13 +188,13 @@ class Query
             ->flatten()
             ->filter()
             ->map(function ($result) {
-                return Document::newHydratedInstance($result);
+                return Prismic::documentResolver($result);
             });
     }
 
     protected function resolveFieldName($field)
     {
-        if ($field != 'uid' && in_array($field, Document::getGlobalFieldKeys())) {
+        if ($field != 'uid' && in_array($field, DocumentResolver::getGlobalFieldKeys())) {
             return 'document.' . $field;
         } elseif ($this->type && ! Str::contains($field, '.')) {
             return 'my.' . $this->type . '.' . $field;

@@ -3,6 +3,7 @@
 namespace WebHappens\Prismic;
 
 use WebHappens\Prismic\Query;
+use WebHappens\Prismic\Document;
 use Illuminate\Support\Collection;
 
 trait HasCaching
@@ -23,7 +24,7 @@ trait HasCaching
 
     public static function setDocumentCache(Collection $records): Collection
     {
-        return static::$cachedDocuments = $records->keyBy('id');
+        return static::$cachedDocuments = $records->whereInstanceOf(Document::class)->keyBy('id');
     }
 
     public static function clearDocumentCache(): Collection
@@ -33,7 +34,7 @@ trait HasCaching
 
     public static function addToDocumentCache(Collection $documents): Collection
     {
-        $documents = $documents->keyBy('id');
+        $documents = $documents->whereInstanceOf(Document::class)->keyBy('id');
         static::setDocumentCache(static::documentCache()->merge($documents));
 
         return $documents;
