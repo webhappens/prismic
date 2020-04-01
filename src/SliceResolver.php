@@ -2,20 +2,18 @@
 
 namespace WebHappens\Prismic;
 
-use Closure;
-
 class SliceResolver
 {
     protected $resolvers = [];
 
-    public function prepend(Closure $resolver)
+    public function prepend(callable $resolver)
     {
         array_unshift($this->resolvers, $resolver);
 
         return $this;
     }
 
-    public function push(Closure $resolver)
+    public function push(callable $resolver)
     {
         array_push($this->resolvers, $resolver);
 
@@ -30,7 +28,7 @@ class SliceResolver
         }
 
         foreach($this->resolvers as $resolver) {
-            if ($result = $resolver->call($this, $type, $data)) {
+            if ($result = $resolver($type, $data)) {
                 return $result;
             }
         }

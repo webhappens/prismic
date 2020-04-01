@@ -2,8 +2,6 @@
 
 namespace WebHappens\Prismic;
 
-use Closure;
-
 class DocumentResolver
 {
     protected static $globalFieldKeys = [
@@ -20,7 +18,7 @@ class DocumentResolver
 
     protected $resolvers = [];
 
-    public function prepend(Closure $resolver)
+    public function prepend(callable $resolver)
     {
         array_unshift($this->resolvers,
         $resolver);
@@ -28,7 +26,7 @@ class DocumentResolver
         return $this;
     }
 
-    public function push(Closure $resolver)
+    public function push(callable $resolver)
     {
         array_push($this->resolvers, $resolver);
 
@@ -43,7 +41,7 @@ class DocumentResolver
         }
 
         foreach($this->resolvers as $resolver) {
-            if ($result = $resolver->call($this, $type, static::normaliseData($data))) {
+            if ($result = $resolver($type, static::normaliseData($data))) {
                 return $result;
             }
         }
