@@ -23,7 +23,8 @@ class QueryTest extends TestCase
     public function test_eager_load_all()
     {
         $api = m::mock(Api::class);
-        $api->shouldReceive('query')
+        $api
+            ->shouldReceive('query')
             ->once()
             ->with([], ['pageSize' => 100, 'page' => 1])
             ->andReturn($this->mockRawStubMany());
@@ -556,7 +557,7 @@ class QueryTest extends TestCase
         $query = $this->mockApiQuery([], ['pageSize' => 100, 'page' => 1], $this->mockRawStubMany());
         $query->cache()->get();
 
-        $query = m::mock(Query::class . '[api]');
+        $query = m::mock(Query::class)->makePartial();
         $query->shouldReceive('api')->never();
         $results = Arr::wrap($callback($query));
 
@@ -602,13 +603,17 @@ class QueryTest extends TestCase
         $times = count($return);
 
         $api = m::mock(Api::class);
-        $api->shouldReceive('query')
+        $api
+            ->shouldReceive('query')
             ->with($expectedPredicates, $expectedOptions)
             ->times($times)
             ->andReturn(...$return);
 
-        $query = m::mock(Query::class . '[api]');
-        $query->shouldReceive('api')->times($times)->andReturn($api);
+        $query = m::mock(Query::class)->makePartial();
+        $query
+            ->shouldReceive('api')
+            ->times($times)
+            ->andReturn($api);
 
         return $query;
     }
