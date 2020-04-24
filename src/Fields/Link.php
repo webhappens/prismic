@@ -4,7 +4,6 @@ namespace WebHappens\Prismic\Fields;
 
 use Illuminate\Contracts\Support\Htmlable;
 use WebHappens\Prismic\Contracts\Fields\LinkHtmlSerializer;
-use WebHappens\Prismic\Fields\LinkResolver;
 
 abstract class Link implements Htmlable
 {

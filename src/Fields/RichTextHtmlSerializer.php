@@ -3,7 +3,6 @@
 namespace WebHappens\Prismic\Fields;
 
 use WebHappens\Prismic\Contracts\Fields\RichTextHtmlSerializer as Contract;
-use WebHappens\Prismic\Fields\LinkResolver;
 
 class RichTextHtmlSerializer implements Contract
 {

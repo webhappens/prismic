@@ -4,7 +4,6 @@ namespace WebHappens\Prismic\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Log;
 use WebHappens\Prismic\Events\MasterRefChanged;
 use WebHappens\Prismic\Events\Test;
 

@@ -7,7 +7,6 @@ use Illuminate\Support\Collection;
 use Mockery as m;
 use Prismic\Api;
 use stdClass;
-use WebHappens\Prismic\Document;
 use WebHappens\Prismic\Prismic;
 use WebHappens\Prismic\Query;
 use WebHappens\Prismic\Slice;

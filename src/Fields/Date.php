@@ -18,7 +18,7 @@ class Date implements Htmlable
 
     public function __construct($date)
     {
-        if (! $date instanceof Carbon) {
+        if ( ! $date instanceof Carbon) {
             $date = Carbon::instance(PrismicDate::asDate($date));
         }
 

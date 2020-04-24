@@ -3,7 +3,6 @@
 namespace WebHappens\Prismic;
 
 use InvalidArgumentException;
-use WebHappens\Prismic\Query;
 
 trait HasOrderings
 {
@@ -11,7 +10,7 @@ trait HasOrderings
 
     public function orderBy(string $field, $direction = 'asc'): Query
     {
-        if (! in_array($direction, ['asc', 'desc'])) {
+        if ( ! in_array($direction, ['asc', 'desc'])) {
             throw new InvalidArgumentException('Order direction must be "asc" or "desc".');
         }
 

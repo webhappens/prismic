@@ -3,7 +3,6 @@
 namespace WebHappens\Prismic;
 
 use Prismic\Predicates;
-use WebHappens\Prismic\Query;
 
 trait HasWheres
 {

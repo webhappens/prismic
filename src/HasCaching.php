@@ -3,8 +3,6 @@
 namespace WebHappens\Prismic;
 
 use Illuminate\Support\Collection;
-use WebHappens\Prismic\Document;
-use WebHappens\Prismic\Query;
 
 trait HasCaching
 {
@@ -14,7 +12,7 @@ trait HasCaching
 
     public static function eagerLoadAll(): Query
     {
-        if (! static::$allDocumentsCached) {
+        if ( ! static::$allDocumentsCached) {
             static::make()->cache()->get();
             static::$allDocumentsCached = true;
         }

@@ -17,7 +17,7 @@ trait HasAttributes
 
     public function getAttribute($key)
     {
-        if (! $key) {
+        if ( ! $key) {
             return;
         }
 
@@ -88,7 +88,7 @@ trait HasAttributes
 
     protected function castAttribute($key, $value)
     {
-        if (! empty($value) && method_exists($this, 'customCastAttribute')) {
+        if ( ! empty($value) && method_exists($this, 'customCastAttribute')) {
             $value = $this->customCastAttribute($this->getCastType($key), $value);
         }
 

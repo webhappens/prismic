@@ -4,7 +4,6 @@ namespace WebHappens\Prismic;
 
 use Illuminate\Http\RedirectResponse;
 use Prismic\Api;
-use WebHappens\Prismic\DocumentUrlResolver;
 
 class Prismic
 {

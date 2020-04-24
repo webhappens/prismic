@@ -10,7 +10,6 @@ use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Prismic\Api;
 use stdClass;
-use WebHappens\Prismic\Document;
 
 class Query
 {
@@ -65,7 +64,7 @@ class Query
 
     public function single(): ?Document
     {
-        if (! $this->type) {
+        if ( ! $this->type) {
             return null;
         }
 

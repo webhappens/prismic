@@ -15,7 +15,7 @@ class MediaLink extends Link
 
     public function getTitle(): ?string
     {
-        if (! $title = parent::getTitle()) {
+        if ( ! $title = parent::getTitle()) {
             $title = data_get(pathinfo($this->getFileName()), 'filename');
         }
 
@@ -43,7 +43,7 @@ class MediaLink extends Link
 
     public function getHumanReadableFileSize($decimals = 0): ?string
     {
-        if (! $bytes = $this->getFileSize()) {
+        if ( ! $bytes = $this->getFileSize()) {
             return null;
         }
 

@@ -28,7 +28,7 @@ class LinkResolver
 
     protected function makeDocumentLink($item, $title)
     {
-        if (! $document = Query::make()->find(data_get($item, 'id'))) {
+        if ( ! $document = Query::make()->find(data_get($item, 'id'))) {
             return null;
         }
 

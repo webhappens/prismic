@@ -5,7 +5,6 @@ namespace WebHappens\Prismic;
 use ArrayAccess;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Traits\ForwardsCalls;
-use stdClass;
 use WebHappens\Prismic\Fields\Date;
 use WebHappens\Prismic\Fields\RichText;
 
