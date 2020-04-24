@@ -2,9 +2,9 @@
 
 namespace WebHappens\Prismic;
 
-use Prismic\Cache\CacheInterface;
 use Illuminate\Cache\TaggableStore;
 use Illuminate\Support\Facades\Cache as IlluminateCache;
+use Prismic\Cache\CacheInterface;
 
 class Cache implements CacheInterface
 {

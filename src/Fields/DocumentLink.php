@@ -11,8 +11,8 @@ class DocumentLink extends Link
 
     public function __construct(Document $document, $title = null)
     {
-        if ( ! $document->isLinkable()) {
-            throw new UnexpectedValueException('Document "' . get_class($document) . '" must have "url" and "title" attributes set.');
+        if (! $document->isLinkable()) {
+            throw new UnexpectedValueException('Document "'.get_class($document).'" must have "url" and "title" attributes set.');
         }
 
         parent::__construct(

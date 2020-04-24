@@ -18,7 +18,7 @@ abstract class Slice implements Htmlable
         return static::$type;
     }
 
-    public static function make(...$parameters): Slice
+    public static function make(...$parameters): self
     {
         return new static(...$parameters);
     }
@@ -37,7 +37,7 @@ abstract class Slice implements Htmlable
 
     public function viewName()
     {
-        return $this->viewName ?: 'slices.' . static::getType();
+        return $this->viewName ?: 'slices.'.static::getType();
     }
 
     protected function data($field, $default = null)

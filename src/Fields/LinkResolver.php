@@ -8,7 +8,7 @@ class LinkResolver
 {
     public function resolve($item, $title = null): ?Link
     {
-        $method = 'make' . data_get($item, 'link_type') . 'Link';
+        $method = 'make'.data_get($item, 'link_type').'Link';
 
         return method_exists($this, $method) ? $this->{$method}($item, $title) : null;
     }
@@ -28,7 +28,7 @@ class LinkResolver
 
     protected function makeDocumentLink($item, $title)
     {
-        if ( ! $document = Query::make()->find(data_get($item, 'id'))) {
+        if (! $document = Query::make()->find(data_get($item, 'id'))) {
             return null;
         }
 

@@ -2,10 +2,10 @@
 
 namespace WebHappens\Prismic\Tests;
 
+use Illuminate\Support\Collection;
 use Mockery as m;
 use WebHappens\Prismic\Query;
 use WebHappens\Prismic\Relation;
-use Illuminate\Support\Collection;
 
 class RelationTest extends TestCase
 {

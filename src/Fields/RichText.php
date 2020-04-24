@@ -3,15 +3,15 @@
 namespace WebHappens\Prismic\Fields;
 
 use Illuminate\Contracts\Support\Htmlable;
-use WebHappens\Prismic\DocumentUrlResolver;
 use Prismic\Dom\RichText as PrismicRichText;
 use WebHappens\Prismic\Contracts\Fields\RichTextHtmlSerializer;
+use WebHappens\Prismic\DocumentUrlResolver;
 
 class RichText implements Htmlable
 {
     protected $data;
 
-    public static function make(...$parameters): RichText
+    public static function make(...$parameters): self
     {
         return new static(...$parameters);
     }

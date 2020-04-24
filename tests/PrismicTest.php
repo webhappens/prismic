@@ -2,12 +2,12 @@
 
 namespace WebHappens\Prismic\Tests;
 
-use Prismic\Api;
-use Mockery as m;
 use Hamcrest\Matchers;
-use WebHappens\Prismic\Prismic;
 use Illuminate\Http\RedirectResponse;
+use Mockery as m;
+use Prismic\Api;
 use WebHappens\Prismic\DocumentUrlResolver;
+use WebHappens\Prismic\Prismic;
 
 class PrismicTest extends TestCase
 {

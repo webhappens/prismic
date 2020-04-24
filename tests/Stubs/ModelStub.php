@@ -6,7 +6,8 @@ use ArrayAccess;
 use Carbon\Carbon;
 use WebHappens\Prismic\HasAttributes;
 
-abstract class BaseModel implements ArrayAccess {
+abstract class BaseModel implements ArrayAccess
+{
     use HasAttributes;
 }
 
@@ -18,7 +19,7 @@ class ModelStub extends BaseModel
 
     public function getNameAttribute()
     {
-        return trim($this->first_name . ' ' . $this->last_name);
+        return trim($this->first_name.' '.$this->last_name);
     }
 
     public function setFirstNameAttribute($value)
@@ -36,7 +37,7 @@ class ModelStub extends BaseModel
     protected function customCastAttribute($type, $value)
     {
         switch ($type) {
-            case "date":
+            case 'date':
                 return Carbon::parse($value);
         }
     }

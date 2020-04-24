@@ -40,7 +40,7 @@ class DocumentResolver
             $type = data_get($data, 'type');
         }
 
-        foreach($this->resolvers as $resolver) {
+        foreach ($this->resolvers as $resolver) {
             if ($result = $resolver($type, static::normaliseData($data))) {
                 return $result;
             }
@@ -49,7 +49,8 @@ class DocumentResolver
         return $this->resolveFromDocuments($type, $data);
     }
 
-    public function resolveFromDocuments($type, $data) {
+    public function resolveFromDocuments($type, $data)
+    {
         foreach (Prismic::$documents as $document) {
             if ($document::getType() != $type) {
                 continue;
@@ -84,5 +85,4 @@ class DocumentResolver
 
         return $returnData;
     }
-
 }

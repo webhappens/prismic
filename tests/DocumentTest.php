@@ -2,19 +2,19 @@
 
 namespace WebHappens\Prismic\Tests;
 
-use stdClass;
-use Prismic\Api;
+use Facades\WebHappens\Prismic\DocumentResolver;
+use Illuminate\Support\Collection;
 use Mockery as m;
+use Prismic\Api;
+use stdClass;
+use WebHappens\Prismic\Document;
+use WebHappens\Prismic\Prismic;
 use WebHappens\Prismic\Query;
 use WebHappens\Prismic\Slice;
-use WebHappens\Prismic\Prismic;
-use WebHappens\Prismic\Document;
-use Illuminate\Support\Collection;
-use Facades\WebHappens\Prismic\DocumentResolver;
-use WebHappens\Prismic\Tests\Stubs\SliceAStub;
-use WebHappens\Prismic\Tests\Stubs\SliceBStub;
 use WebHappens\Prismic\Tests\Stubs\DocumentAStub;
 use WebHappens\Prismic\Tests\Stubs\DocumentBStub;
+use WebHappens\Prismic\Tests\Stubs\SliceAStub;
+use WebHappens\Prismic\Tests\Stubs\SliceBStub;
 
 class DocumentTest extends TestCase
 {

@@ -2,9 +2,9 @@
 
 namespace WebHappens\Prismic\Tests;
 
-use WebHappens\Prismic\Slice;
-use WebHappens\Prismic\Prismic;
 use Facades\WebHappens\Prismic\SliceResolver;
+use WebHappens\Prismic\Prismic;
+use WebHappens\Prismic\Slice;
 use WebHappens\Prismic\Tests\Stubs\SliceAStub;
 use WebHappens\Prismic\Tests\Stubs\SliceBStub;
 

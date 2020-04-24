@@ -2,12 +2,12 @@
 
 namespace WebHappens\Prismic;
 
-use stdClass;
 use ArrayAccess;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Traits\ForwardsCalls;
+use stdClass;
 use WebHappens\Prismic\Fields\Date;
 use WebHappens\Prismic\Fields\RichText;
-use Illuminate\Support\Traits\ForwardsCalls;
 
 abstract class Document implements ArrayAccess
 {
@@ -30,7 +30,7 @@ abstract class Document implements ArrayAccess
 
     protected $maps = [];
 
-    public static function make(): Document
+    public static function make(): self
     {
         return resolve(static::class);
     }
@@ -111,11 +111,11 @@ abstract class Document implements ArrayAccess
     protected function customCastAttribute($type, $value)
     {
         switch ($type) {
-            case "date":
+            case 'date':
                 return Date::make($value);
-            case "richtext":
+            case 'richtext':
                 return RichText::make($value);
-            case "url":
+            case 'url':
                 return url($value);
         }
 

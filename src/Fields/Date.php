@@ -3,22 +3,22 @@
 namespace WebHappens\Prismic\Fields;
 
 use Carbon\Carbon;
-use Prismic\Dom\Date as PrismicDate;
 use Illuminate\Contracts\Support\Htmlable;
+use Prismic\Dom\Date as PrismicDate;
 
 class Date implements Htmlable
 {
     protected $carbon;
     protected $stringValue;
 
-    public static function make(...$parameters): Date
+    public static function make(...$parameters): self
     {
         return new static(...$parameters);
     }
 
     public function __construct($date)
     {
-        if ( ! $date instanceOf Carbon) {
+        if (! $date instanceof Carbon) {
             $date = Carbon::instance(PrismicDate::asDate($date));
         }
 
@@ -51,7 +51,7 @@ class Date implements Htmlable
     {
         $carbon = $this->carbon->{$method}(...$parameters);
 
-        if ($carbon instanceOf Carbon) {
+        if ($carbon instanceof Carbon) {
             $this->setCarbonInstance($carbon);
 
             return $this;

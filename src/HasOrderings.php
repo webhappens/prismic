@@ -11,14 +11,14 @@ trait HasOrderings
 
     public function orderBy(string $field, $direction = 'asc'): Query
     {
-        if ( ! in_array($direction, ['asc', 'desc'])) {
+        if (! in_array($direction, ['asc', 'desc'])) {
             throw new InvalidArgumentException('Order direction must be "asc" or "desc".');
         }
 
         $field = $this->resolveFieldName($field);
         $direction = $direction == 'desc' ? ' desc' : '';
 
-        array_push($this->orderings, $field . $direction);
+        array_push($this->orderings, $field.$direction);
 
         return $this;
     }

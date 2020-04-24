@@ -2,14 +2,14 @@
 
 namespace WebHappens\Prismic\Tests;
 
-use Prismic\Api;
-use Mockery as m;
 use Illuminate\Support\Arr;
-use Prismic\SimplePredicate;
-use InvalidArgumentException;
-use WebHappens\Prismic\Query;
-use WebHappens\Prismic\Prismic;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
+use Mockery as m;
+use Prismic\Api;
+use Prismic\SimplePredicate;
+use WebHappens\Prismic\Prismic;
+use WebHappens\Prismic\Query;
 use WebHappens\Prismic\Tests\Stubs\DocumentAStub;
 use WebHappens\Prismic\Tests\Stubs\DocumentBStub;
 
@@ -220,7 +220,7 @@ class QueryTest extends TestCase
 
     public function test_where_not()
     {
-        $predicates = Query::make()->whereNot('example.foo', "baz")->toPredicates();
+        $predicates = Query::make()->whereNot('example.foo', 'baz')->toPredicates();
         $this->assertEquals('[:d = not(my.example.foo, "baz")]', $predicates[0]->q());
     }
 
@@ -293,7 +293,7 @@ class QueryTest extends TestCase
     public function test_where_date_between()
     {
         $predicates = Query::make()->whereDateBetween('example.foo', '2019-04-01', '2019-04-25')->toPredicates();
-        $this->assertEquals( '[:d = date.between(my.example.foo, "2019-04-01", "2019-04-25")]', $predicates[0]->q());
+        $this->assertEquals('[:d = date.between(my.example.foo, "2019-04-01", "2019-04-25")]', $predicates[0]->q());
     }
 
     public function test_where_day_of_month()
@@ -377,7 +377,7 @@ class QueryTest extends TestCase
     public function test_where_near()
     {
         $predicates = Query::make()->whereNear('example.foo', 48.880401900547, 2.3423677682877, 5)->toPredicates();
-        $this->assertEquals( '[:d = geopoint.near(my.example.foo, 48.880401900547, 2.3423677682877, 5)]', $predicates[0]->q());
+        $this->assertEquals('[:d = geopoint.near(my.example.foo, 48.880401900547, 2.3423677682877, 5)]', $predicates[0]->q());
     }
 
     public function test_get()

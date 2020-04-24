@@ -2,15 +2,15 @@
 
 namespace WebHappens\Prismic;
 
-use stdClass;
-use Prismic\Api;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use Prismic\Api;
+use stdClass;
 use WebHappens\Prismic\Document;
-use Illuminate\Support\Collection;
-use Illuminate\Pagination\Paginator;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class Query
 {
@@ -21,12 +21,12 @@ class Query
     protected $type;
     protected $options = [];
 
-    public static function make(): Query
+    public static function make(): self
     {
         return new static;
     }
 
-    public function type($type): Query
+    public function type($type): self
     {
         $this->type = $type;
         $this->where('type', $type);
@@ -55,7 +55,7 @@ class Query
 
         if (static::documentCache()->has($ids)) {
             return collect($ids)
-                ->map(function($id) {
+                ->map(function ($id) {
                     return static::documentCache()->get($id);
                 });
         }
@@ -65,7 +65,7 @@ class Query
 
     public function single(): ?Document
     {
-        if ( ! $this->type) {
+        if (! $this->type) {
             return null;
         }
 
@@ -161,7 +161,7 @@ class Query
         return $this->api()->query($this->toPredicates(), $this->getOptions());
     }
 
-    public function options(array $options = []): Query
+    public function options(array $options = []): self
     {
         $this->options = array_merge($this->options, $options);
 
@@ -171,7 +171,7 @@ class Query
     public function getOptions()
     {
         if ($this->orderings) {
-            $this->options(['orderings' => '[' . implode(',', $this->orderings) . ']']);
+            $this->options(['orderings' => '['.implode(',', $this->orderings).']']);
         }
 
         return $this->options;
@@ -195,11 +195,11 @@ class Query
     protected function resolveFieldName($field)
     {
         if ($field != 'uid' && in_array($field, DocumentResolver::getGlobalFieldKeys())) {
-            return 'document.' . $field;
+            return 'document.'.$field;
         } elseif ($this->type && ! Str::contains($field, '.')) {
-            return 'my.' . $this->type . '.' . $field;
+            return 'my.'.$this->type.'.'.$field;
         } else {
-            return 'my.' . $field;
+            return 'my.'.$field;
         }
     }
 }

@@ -27,7 +27,7 @@ class SliceResolver
             $type = data_get($data, 'slice_type');
         }
 
-        foreach($this->resolvers as $resolver) {
+        foreach ($this->resolvers as $resolver) {
             if ($result = $resolver($type, $data)) {
                 return $result;
             }
@@ -36,7 +36,8 @@ class SliceResolver
         return $this->resolveFromSlices($type, $data);
     }
 
-    public function resolveFromSlices($type, $data) {
+    public function resolveFromSlices($type, $data)
+    {
         foreach (Prismic::$slices as $slice) {
             if ($slice::getType() != $type) {
                 continue;

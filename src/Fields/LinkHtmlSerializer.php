@@ -11,7 +11,7 @@ class LinkHtmlSerializer implements Contract
         $attributes = '';
 
         foreach ($link->getAttributes() as $key => $value) {
-            $attributes .= ' ' . $key . '="' . $value . '"';
+            $attributes .= ' '.$key.'="'.$value.'"';
         }
 
         return sprintf(

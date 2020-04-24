@@ -2,8 +2,8 @@
 
 namespace WebHappens\Prismic\Facades;
 
-use WebHappens\Prismic\Relation as R;
 use Illuminate\Support\Facades\Facade;
+use WebHappens\Prismic\Relation as R;
 
 class Relation extends Facade
 {

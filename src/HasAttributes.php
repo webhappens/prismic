@@ -17,7 +17,7 @@ trait HasAttributes
 
     public function getAttribute($key)
     {
-        if ( ! $key) {
+        if (! $key) {
             return;
         }
 
@@ -45,12 +45,12 @@ trait HasAttributes
 
     public function hasAttributeAccessor($key)
     {
-        return method_exists($this, 'get' . Str::studly($key) . 'Attribute');
+        return method_exists($this, 'get'.Str::studly($key).'Attribute');
     }
 
     protected function callAttributeAccessor($key, $value)
     {
-        return $this->{'get' . Str::studly($key) . 'Attribute'}($value);
+        return $this->{'get'.Str::studly($key).'Attribute'}($value);
     }
 
     public function setAttribute($key, $value)
@@ -68,12 +68,12 @@ trait HasAttributes
 
     public function hasAttributeMutator($key)
     {
-        return method_exists($this, 'set' . Str::studly($key) . 'Attribute');
+        return method_exists($this, 'set'.Str::studly($key).'Attribute');
     }
 
     protected function callAttributeMutator($key, $value)
     {
-        return $this->{'set' . Str::studly($key) . 'Attribute'}($value);
+        return $this->{'set'.Str::studly($key).'Attribute'}($value);
     }
 
     public function getCasts()
@@ -88,7 +88,7 @@ trait HasAttributes
 
     protected function castAttribute($key, $value)
     {
-        if ( ! empty($value) && method_exists($this, 'customCastAttribute')) {
+        if (! empty($value) && method_exists($this, 'customCastAttribute')) {
             $value = $this->customCastAttribute($this->getCastType($key), $value);
         }
 

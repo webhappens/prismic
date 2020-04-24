@@ -2,8 +2,8 @@
 
 namespace WebHappens\Prismic;
 
-use Prismic\Api;
 use Illuminate\Http\RedirectResponse;
+use Prismic\Api;
 use WebHappens\Prismic\DocumentUrlResolver;
 
 class Prismic
@@ -11,14 +11,14 @@ class Prismic
     public static $documents = [];
     public static $slices = [];
 
-    public static function documents(array $documents): Prismic
+    public static function documents(array $documents): self
     {
         static::$documents = array_merge(static::$documents, $documents);
 
         return new static;
     }
 
-    public static function slices(array $slices): Prismic
+    public static function slices(array $slices): self
     {
         static::$slices = array_merge(static::$slices, $slices);
 
