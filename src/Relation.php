@@ -6,11 +6,14 @@ class Relation
 {
     public function one($field)
     {
-        if ($field->isBroken) {
+        $id = data_get($field, 'id');
+        $isBroken = data_get($field, 'isBroken');
+
+        if ( ! $id || $isBroken) {
             return;
         }
 
-        return $this->query()->find($field->id);
+        return $this->query()->find($id);
     }
 
     public function many($data, $key)

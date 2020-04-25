@@ -20,6 +20,13 @@ class RelationTest extends TestCase
         $relation->one((object) ['id' => 1, 'isBroken' => false]);
     }
 
+    public function test_one_returns_null_if_no_id()
+    {
+        $this->assertNull(
+            (new Relation)->one((object) ['foo' => 'bar'])
+        );
+    }
+
     public function test_one_returns_null_if_is_broken()
     {
         $this->assertNull(
