@@ -10,8 +10,12 @@ class DocumentUrlResolver extends LinkResolver
     {
         $document = Prismic::documentResolver($data);
 
-        if ($document && $document->isLinkable()) {
+        if ($document && isset($document->url)) {
             return $document->url;
+        }
+
+        if ($document && method_exists($document, 'url')) {
+            return $document->url();
         }
 
         return url('/');
