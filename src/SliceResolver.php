@@ -2,56 +2,30 @@
 
 namespace WebHappens\Prismic;
 
-use WebHappens\Prismic\Contracts\SliceResolver as SliceResolverContract;
-
-class SliceResolver
+abstract class SliceResolver
 {
-    protected $resolvers = [];
+    protected $documentType;
+    protected $sliceZone;
+    protected $type;
+    protected $data;
 
-    public function prepend($resolver)
+    public function __construct($documentType, $sliceZone, $type, $data)
     {
-        array_unshift($this->resolvers, $resolver);
-
-        return $this;
+        $this->documentType = $documentType;
+        $this->sliceZone = $sliceZone;
+        $this->type = $type;
+        $this->data = $data;
     }
 
-    public function push($resolver)
+    public function shouldResolve(): bool
     {
-        array_push($this->resolvers, $resolver);
-
-        return $this;
+        return true;
     }
 
-    public function resolve($document, $field, $type, $data = [])
+    abstract public function resolve();
+
+    public function data($key, $default = null)
     {
-        if (func_num_args() === 1) {
-            $data = (array) $type;
-            $type = data_get($data, 'slice_type');
-        }
-
-        foreach ($this->resolvers as $resolver) {
-            if ($resolver instanceof SliceResolverContract && $resolver->shouldResolve($document, $field, $type, $data)) {
-                return $resolver->resolve($type, $data);
-            }
-
-            if (is_callable($resolver) && $result = $resolver($type, $data)) {
-                return $result;
-            }
-        }
-    }
-
-    public function resolveFromSlices($type, $data)
-    {
-        foreach (Prismic::$slices as $slice) {
-            if ($slice::getType() != $type) {
-                continue;
-            }
-
-            if ($slice = $slice::make($data)) {
-                return $slice;
-            }
-        }
-
-        return null;
+        return data_get($this->data, $key, $default);
     }
 }

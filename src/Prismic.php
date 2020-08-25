@@ -36,10 +36,10 @@ class Prismic
     public static function sliceResolver(...$args)
     {
         if ($args) {
-            return resolve(SliceResolver::class)->resolve(...$args);
+            return resolve(SliceResolverCollection::class)->resolve(...$args);
         }
 
-        return resolve(SliceResolver::class);
+        return resolve(SliceResolverCollection::class);
     }
 
     public static function preview($token): RedirectResponse

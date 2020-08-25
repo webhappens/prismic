@@ -26,7 +26,7 @@ class PrismicServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(\WebHappens\Prismic\DocumentResolver::class);
-        $this->app->singleton(\WebHappens\Prismic\SliceResolver::class);
+        $this->app->singleton(\WebHappens\Prismic\SliceResolverCollection::class);
 
         $this->app->bind(\WebHappens\Prismic\Contracts\Fields\RichTextHtmlSerializer::class, \WebHappens\Prismic\Fields\RichTextHtmlSerializer::class);
         $this->app->bind(\WebHappens\Prismic\Contracts\Fields\LinkHtmlSerializer::class, \WebHappens\Prismic\Fields\LinkHtmlSerializer::class);

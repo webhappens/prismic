@@ -49,7 +49,7 @@ abstract class Document implements ArrayAccess
         return isset($this->url, $this->title);
     }
 
-    public function getSlicesFor($field = 'body', $types = []): Collection
+    public function getSlicesFor($sliceZone = 'body', $types = []): Collection
     {
         $types = is_array($types) ? $types : func_get_args();
         $slices = collect($this->body ?? []);
@@ -61,8 +61,8 @@ abstract class Document implements ArrayAccess
         }
 
         return $slices
-            ->map(function ($data) use ($field) {
-                return Prismic::sliceResolver(static::$type, $field, $data->slice_type, $data);
+            ->map(function ($data) use ($sliceZone) {
+                return Prismic::sliceResolver(static::$type, $sliceZone, data_get($data, 'slice_type'), $data);
             })
             ->filter();
     }
