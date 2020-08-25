@@ -8,18 +8,10 @@ use Prismic\Api;
 class Prismic
 {
     public static $documents = [];
-    public static $slices = [];
 
     public static function documents(array $documents): self
     {
         static::$documents = array_merge(static::$documents, $documents);
-
-        return new static;
-    }
-
-    public static function slices(array $slices): self
-    {
-        static::$slices = array_merge(static::$slices, $slices);
 
         return new static;
     }

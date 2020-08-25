@@ -23,21 +23,9 @@ class PrismicTest extends TestCase
         Prismic::$documents = [];
     }
 
-    public function test_slices()
-    {
-        $slices = [
-            'App\Slices\RichText',
-            'App\Slices\Table',
-        ];
-
-        Prismic::slices($slices);
-        $this->assertEquals($slices, Prismic::$slices);
-        Prismic::$slices = [];
-    }
-
     public function test_can_chain_from_static()
     {
-        $prismic = Prismic::documents([])->slices([]);
+        $prismic = Prismic::documents([]);
         $this->assertInstanceOf(Prismic::class, $prismic);
     }
 

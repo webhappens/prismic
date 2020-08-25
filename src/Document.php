@@ -56,8 +56,9 @@ abstract class Document implements ArrayAccess
 
         if (count($types)) {
             $slices = $slices->filter(function ($data) use ($types) {
-                return in_array(data_get($data, 'slice_type'), $types);
-            });
+                    return in_array(data_get($data, 'slice_type'), $types);
+                })
+                ->values();
         }
 
         return $slices

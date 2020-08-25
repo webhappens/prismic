@@ -102,7 +102,15 @@ class DocumentTest extends TestCase
 
     public function test_get_slices()
     {
-        Prismic::slices([SliceAStub::class, SliceBStub::class]);
+        Prismic::sliceResolver()->push(function($data, $type) {
+            switch ($type) {
+                case 'slice_a':
+                    return 'This is the text for slice A';
+
+                case 'slice_b':
+                    return 'And here is the text for slice B';
+            }
+        });
 
         $document = DocumentAStub::make();
         $document->body = [
@@ -110,17 +118,16 @@ class DocumentTest extends TestCase
             ['slice_type' => 'slice_b'],
         ];
 
-        $allSlices = $document->getSlices();
-        $this->assertInstanceOf(Collection::class, $allSlices);
-        $this->assertCount(2, $allSlices);
-        $this->assertContainsOnlyInstancesOf(Slice::class, $allSlices);
+        $slices = $document->getSlices();
+        $this->assertInstanceOf(Collection::class, $slices);
+        $this->assertCount(2, $slices);
+        $this->assertEquals('This is the text for slice A', $slices[0]);
+        $this->assertEquals('And here is the text for slice B', $slices[1]);
 
-        $sliceA = $document->getSlices('slice_a');
-        $this->assertInstanceOf(Collection::class, $sliceA);
-        $this->assertCount(1, $sliceA);
-        $this->assertContainsOnlyInstancesOf(SliceAStub::class, $sliceA);
-
-        Prismic::$slices = [];
+        $slices = $document->getSlices('slice_b');
+        $this->assertInstanceOf(Collection::class, $slices);
+        $this->assertCount(1, $slices);
+        $this->assertEquals('And here is the text for slice B', $slices[0]);
     }
 
     public function test_new_query()
