@@ -2,25 +2,27 @@
 
 namespace WebHappens\Prismic;
 
+use WebHappens\Prismic\Contracts\SliceResolver as SliceResolverContract;
+
 class SliceResolver
 {
     protected $resolvers = [];
 
-    public function prepend(callable $resolver)
+    public function prepend($resolver)
     {
         array_unshift($this->resolvers, $resolver);
 
         return $this;
     }
 
-    public function push(callable $resolver)
+    public function push($resolver)
     {
         array_push($this->resolvers, $resolver);
 
         return $this;
     }
 
-    public function resolve($type, $data = [])
+    public function resolve($document, $field, $type, $data = [])
     {
         if (func_num_args() === 1) {
             $data = (array) $type;
@@ -28,7 +30,11 @@ class SliceResolver
         }
 
         foreach ($this->resolvers as $resolver) {
-            if ($result = $resolver($type, $data)) {
+            if ($resolver instanceof SliceResolverContract && $resolver->shouldResolve($document, $field, $type, $data)) {
+                return $resolver->resolve($type, $data);
+            }
+
+            if (is_callable($resolver) && $result = $resolver($type, $data)) {
                 return $result;
             }
         }
