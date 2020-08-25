@@ -38,8 +38,6 @@ class SliceResolver
                 return $result;
             }
         }
-
-        return $this->resolveFromSlices($type, $data);
     }
 
     public function resolveFromSlices($type, $data)
