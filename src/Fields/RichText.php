@@ -10,6 +10,7 @@ use WebHappens\Prismic\DocumentUrlResolver;
 class RichText implements Htmlable
 {
     protected $data;
+    protected $richTextHtmlSerializer;
 
     public static function make(...$parameters): self
     {
@@ -19,6 +20,20 @@ class RichText implements Htmlable
     public function __construct($data)
     {
         $this->data = $data;
+    }
+
+    public function setRichTextHtmlSerializer(RichTextHtmlSerializer $richTextHtmlSerializer)
+    {
+        $this->richTextHtmlSerializer = $richTextHtmlSerializer;
+    }
+
+    public function getRichTextHtmlSerializer()
+    {
+        if (is_null($this->richTextHtmlSerializer)) {
+            return resolve(RichTextHtmlSerializer::class);
+        }
+
+        return $this->richTextHtmlSerializer;
     }
 
     public function asText(): string
@@ -31,7 +46,7 @@ class RichText implements Htmlable
         return PrismicRichText::asHtml(
             $this->data,
             resolve(DocumentUrlResolver::class),
-            resolve(RichTextHtmlSerializer::class)
+            $this->getRichTextHtmlSerializer()
         );
     }
 
