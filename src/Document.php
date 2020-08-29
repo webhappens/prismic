@@ -51,21 +51,18 @@ abstract class Document implements ArrayAccess
 
     public function getSlicesFor($sliceZone = 'body', $types = []): Collection
     {
-
-        if (count($types)) {
-            $slices = $slices->filter(function ($data) use ($types) {
-                    return in_array(data_get($data, 'slice_type'), $types);
-                })
-                ->values();
-        }
         $types = is_array($types) ? $types : array_slice(func_get_args(), 1);
         $slices = collect($this->attributes[$sliceZone] ?? []);
 
         return $slices
+            ->filter(function ($data) use ($types) {
+                return ! $types || in_array(data_get($data, 'slice_type'), $types);
+            })
             ->map(function ($data) use ($sliceZone) {
                 return Prismic::sliceResolver(static::$type, $sliceZone, data_get($data, 'slice_type'), $data);
             })
-            ->filter();
+            ->filter()
+            ->values();
     }
 
     public function getSlices($types = []): Collection
