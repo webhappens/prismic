@@ -52,7 +52,7 @@ abstract class Document implements ArrayAccess
     public function getSlicesFor($sliceZone = 'body', $types = []): Collection
     {
         $types = is_array($types) ? $types : func_get_args();
-        $slices = collect($this->body ?? []);
+        $slices = collect($this->$sliceZone ?? []);
 
         if (count($types)) {
             $slices = $slices->filter(function ($data) use ($types) {
