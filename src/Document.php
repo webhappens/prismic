@@ -51,7 +51,6 @@ abstract class Document implements ArrayAccess
 
     public function getSlicesFor($sliceZone = 'body', $types = []): Collection
     {
-        $slices = collect($this->$sliceZone ?? []);
 
         if (count($types)) {
             $slices = $slices->filter(function ($data) use ($types) {
@@ -60,6 +59,7 @@ abstract class Document implements ArrayAccess
                 ->values();
         }
         $types = is_array($types) ? $types : array_slice(func_get_args(), 1);
+        $slices = collect($this->attributes[$sliceZone] ?? []);
 
         return $slices
             ->map(function ($data) use ($sliceZone) {
