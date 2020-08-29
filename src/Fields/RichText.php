@@ -25,6 +25,8 @@ class RichText implements Htmlable
     public function setRichTextHtmlSerializer(RichTextHtmlSerializer $richTextHtmlSerializer)
     {
         $this->richTextHtmlSerializer = $richTextHtmlSerializer;
+
+        return $this;
     }
 
     public function getRichTextHtmlSerializer()
