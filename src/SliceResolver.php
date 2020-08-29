@@ -4,14 +4,14 @@ namespace WebHappens\Prismic;
 
 abstract class SliceResolver
 {
-    protected $documentType;
+    protected $document;
     protected $sliceZone;
     protected $type;
     protected $data;
 
-    public function __construct($documentType, $sliceZone, $type, $data)
+    public function __construct(Document $document, $sliceZone, $type, $data)
     {
-        $this->documentType = $documentType;
+        $this->document = $document;
         $this->sliceZone = $sliceZone;
         $this->type = $type;
         $this->data = $data;

@@ -59,7 +59,7 @@ abstract class Document implements ArrayAccess
                 return ! $types || in_array(data_get($data, 'slice_type'), $types);
             })
             ->map(function ($data) use ($sliceZone) {
-                return Prismic::sliceResolver(static::$type, $sliceZone, data_get($data, 'slice_type'), $data);
+                return Prismic::sliceResolver($this, $sliceZone, data_get($data, 'slice_type'), $data);
             })
             ->filter()
             ->values();
