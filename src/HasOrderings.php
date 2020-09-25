@@ -26,4 +26,14 @@ trait HasOrderings
     {
         return $this->orderBy($field, 'desc');
     }
+
+    public function latest($column = 'first_publication_date')
+    {
+        return $this->orderBy($column, 'desc');
+    }
+
+    public function oldest($column = 'first_publication_date')
+    {
+        return $this->orderBy($column, 'asc');
+    }
 }
