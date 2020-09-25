@@ -91,6 +91,13 @@ class Query
         return $this->shouldCache ? static::addToDocumentCache($records)->first() : $records->first();
     }
 
+    public function count()
+    {
+        $response = $this->options(['pageSize' => 1, 'page' => 1])->getRaw();
+
+        return $response->total_results_size ?? 0;
+    }
+
     public function paginate($pageSize = 25, $page = 1)
     {
         if ($pageSize > 100) {
