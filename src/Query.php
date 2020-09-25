@@ -62,13 +62,15 @@ class Query
         return $this->whereIn('id', $ids)->get();
     }
 
-    public function single(): ?Document
+    public function single($type = null): ?Document
     {
-        if ( ! $this->type) {
+        $type = $type ?: $this->type;
+
+        if ( ! $type) {
             return null;
         }
 
-        return $this->first();
+        return Prismic::documentResolver($this->api()->getSingle($type));
     }
 
     public function get(): Collection
