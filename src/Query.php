@@ -70,7 +70,13 @@ class Query
             return null;
         }
 
-        return Prismic::documentResolver($this->api()->getSingle($type));
+        $document = Prismic::documentResolver($this->api()->getSingle($type));
+
+        if ($this->shouldCache) {
+            static::addToDocumentCache(collect([$document]));
+        }
+
+        return $document;
     }
 
     public function get(): Collection
