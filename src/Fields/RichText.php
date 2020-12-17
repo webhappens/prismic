@@ -3,14 +3,14 @@
 namespace WebHappens\Prismic\Fields;
 
 use Illuminate\Contracts\Support\Htmlable;
+use WebHappens\Prismic\DocumentUrlResolver;
 use Prismic\Dom\RichText as PrismicRichText;
 use WebHappens\Prismic\Contracts\Fields\RichTextHtmlSerializer;
-use WebHappens\Prismic\DocumentUrlResolver;
 
 class RichText implements Htmlable
 {
     protected $data;
-    protected $richTextHtmlSerializer;
+    protected $htmlSerializer;
 
     public static function make(...$parameters): self
     {
@@ -20,22 +20,125 @@ class RichText implements Htmlable
     public function __construct($data)
     {
         $this->data = $data;
+
+        $this->htmlSerializer = resolve(RichTextHtmlSerializer::class);
     }
 
-    public function setRichTextHtmlSerializer(RichTextHtmlSerializer $richTextHtmlSerializer)
+    public function heading1(callable $serializer)
     {
-        $this->richTextHtmlSerializer = $richTextHtmlSerializer;
+        $this->htmlSerializer->registerSerializerFor('heading1', $serializer);
 
         return $this;
     }
 
-    public function getRichTextHtmlSerializer()
+    public function heading2(callable $serializer)
     {
-        if (is_null($this->richTextHtmlSerializer)) {
-            return resolve(RichTextHtmlSerializer::class);
-        }
+        $this->htmlSerializer->registerSerializerFor('heading2', $serializer);
 
-        return $this->richTextHtmlSerializer;
+        return $this;
+    }
+
+    public function heading3(callable $serializer)
+    {
+        $this->htmlSerializer->registerSerializerFor('heading3', $serializer);
+
+        return $this;
+    }
+
+    public function heading4(callable $serializer)
+    {
+        $this->htmlSerializer->registerSerializerFor('heading4', $serializer);
+
+        return $this;
+    }
+
+    public function heading5(callable $serializer)
+    {
+        $this->htmlSerializer->registerSerializerFor('heading5', $serializer);
+
+        return $this;
+    }
+
+    public function heading6(callable $serializer)
+    {
+        $this->htmlSerializer->registerSerializerFor('heading6', $serializer);
+
+        return $this;
+    }
+
+    public function paragraph(callable $serializer)
+    {
+        $this->htmlSerializer->registerSerializerFor('paragraph', $serializer);
+
+        return $this;
+    }
+
+    public function preformatted(callable $serializer)
+    {
+        $this->htmlSerializer->registerSerializerFor('preformatted', $serializer);
+
+        return $this;
+    }
+
+    public function listItem(callable $serializer)
+    {
+        $this->htmlSerializer->registerSerializerFor('list-item', $serializer);
+
+        return $this;
+    }
+
+    public function orderedListItem(callable $serializer)
+    {
+        $this->htmlSerializer->registerSerializerFor('o-list-item', $serializer);
+
+        return $this;
+    }
+
+    public function image(callable $serializer)
+    {
+        $this->htmlSerializer->registerSerializerFor('image', $serializer);
+
+        return $this;
+    }
+
+    public function embed(callable $serializer)
+    {
+        $this->htmlSerializer->registerSerializerFor('embed', $serializer);
+
+        return $this;
+    }
+
+    public function strong(callable $serializer)
+    {
+        $this->htmlSerializer->registerSerializerFor('strong', $serializer);
+
+        return $this;
+    }
+
+    public function em(callable $serializer)
+    {
+        $this->htmlSerializer->registerSerializerFor('em', $serializer);
+
+        return $this;
+    }
+
+    public function hyperlink(callable $serializer)
+    {
+        $this->htmlSerializer->registerSerializerFor('hyperlink', $serializer);
+
+        return $this;
+    }
+
+    public function setHtmlSerializer(RichTextHtmlSerializer $htmlSerializer)
+    {
+        $this->htmlSerializer = $htmlSerializer;
+
+        return $this;
+    }
+
+    public function getHtmlSerializer()
+    {
+        return $this->htmlSerializer;
     }
 
     public function asText(): string
@@ -48,7 +151,7 @@ class RichText implements Htmlable
         return PrismicRichText::asHtml(
             $this->data,
             resolve(DocumentUrlResolver::class),
-            $this->getRichTextHtmlSerializer()
+            $this->getHtmlSerializer()
         );
     }
 
