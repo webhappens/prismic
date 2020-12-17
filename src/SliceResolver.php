@@ -26,6 +26,6 @@ abstract class SliceResolver
 
     public function data($key, $default = null)
     {
-        return data_get($this->data, $key, $default);
+        return data_get($this->data, $key, data_get($this->data, "primary.$key", $default));
     }
 }
