@@ -4,16 +4,13 @@ namespace WebHappens\Prismic\Tests;
 
 use Facades\WebHappens\Prismic\DocumentResolver;
 use Illuminate\Support\Collection;
-use Mockery as m;
+use Mockery;
 use Prismic\Api;
 use stdClass;
 use WebHappens\Prismic\Prismic;
 use WebHappens\Prismic\Query;
-use WebHappens\Prismic\Slice;
 use WebHappens\Prismic\Tests\Stubs\DocumentAStub;
 use WebHappens\Prismic\Tests\Stubs\DocumentBStub;
-use WebHappens\Prismic\Tests\Stubs\SliceAStub;
-use WebHappens\Prismic\Tests\Stubs\SliceBStub;
 
 class DocumentTest extends TestCase
 {
@@ -80,7 +77,7 @@ class DocumentTest extends TestCase
         $expectedPredicates = Query::make()->where('type', 'document_a')->toPredicates();
         $expectedOptions = ['pageSize' => 100, 'page' => 1];
 
-        $api = m::mock(Api::class);
+        $api = Mockery::mock(Api::class);
         $api->shouldReceive('query')->once()->with($expectedPredicates, $expectedOptions)->andReturn($rawStub);
         $this->swap(Api::class, $api);
 

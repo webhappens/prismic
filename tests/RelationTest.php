@@ -3,7 +3,7 @@
 namespace WebHappens\Prismic\Tests;
 
 use Illuminate\Support\Collection;
-use Mockery as m;
+use Mockery;
 use WebHappens\Prismic\Query;
 use WebHappens\Prismic\Relation;
 
@@ -11,10 +11,10 @@ class RelationTest extends TestCase
 {
     public function test_one()
     {
-        $query = m::mock(Query::class);
+        $query = Mockery::mock(Query::class)->makePartial();
         $query->shouldReceive('find')->once()->with(1);
 
-        $relation = m::mock(Relation::class)->makePartial();
+        $relation = Mockery::mock(Relation::class)->makePartial();
         $relation->shouldAllowMockingProtectedMethods()->shouldReceive('query')->once()->andReturn($query);
 
         $relation->one((object) ['id' => 1, 'isBroken' => false]);
@@ -36,10 +36,10 @@ class RelationTest extends TestCase
 
     public function test_many()
     {
-        $query = m::mock(Query::class);
+        $query = Mockery::mock(Query::class)->makePartial();
         $query->shouldReceive('findMany')->once()->with([1, 3]);
 
-        $relation = m::mock(Relation::class)->makePartial();
+        $relation = Mockery::mock(Relation::class)->makePartial();
         $relation->shouldAllowMockingProtectedMethods()->shouldReceive('query')->once()->andReturn($query);
 
         $relation->many([
