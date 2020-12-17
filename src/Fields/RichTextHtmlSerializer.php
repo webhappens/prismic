@@ -2,15 +2,38 @@
 
 namespace WebHappens\Prismic\Fields;
 
+use Illuminate\Support\Str;
 use WebHappens\Prismic\Contracts\Fields\RichTextHtmlSerializer as Contract;
 
 class RichTextHtmlSerializer implements Contract
 {
+    protected $serializers = [];
+
+    public function registerSerializerFor(string $type, callable $serializer): self
+    {
+        unset($this->serializers[$type]);
+
+        $this->serializers[$type] = $serializer;
+
+        return $this;
+    }
+
+    public function hasSerializerFor(string $type): bool
+    {
+        return array_key_exists($type, $this->serializers);
+    }
+
     public function serialize($element, $content): string
     {
-        switch ($element->type) {
-            case 'hyperlink':
-                return (string) (new LinkResolver)->resolve($element->data, $content)->toHtml();
+        $type = $element->type;
+
+        if ($this->hasSerializerFor($type)) {
+            return call_user_func($this->serializers[$type], $element, $content);
+        }
+
+        $localMethod = 'serialize'.Str::studly($type);
+        if (method_exists($this, $localMethod)) {
+            return $this->$localMethod($element, $content);
         }
 
         return '';
