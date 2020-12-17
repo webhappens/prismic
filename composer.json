@@ -28,7 +28,7 @@
         "prismic/php-sdk": "^5.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^5.0|^6.0"
+        "orchestra/testbench": "^5.8|^6.3"
     },
     "autoload": {
         "psr-4": {
