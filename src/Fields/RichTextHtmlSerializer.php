@@ -9,7 +9,7 @@ class RichTextHtmlSerializer implements Contract
 {
     protected $serializers = [];
 
-    public function registerSerializerFor(string $type, callable $serializer): self
+    public function registerSerializerFor(string $type, callable $serializer): Contract
     {
         unset($this->serializers[$type]);
 
