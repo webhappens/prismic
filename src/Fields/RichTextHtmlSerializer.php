@@ -23,12 +23,17 @@ class RichTextHtmlSerializer implements Contract
         return array_key_exists($type, $this->serializers);
     }
 
+    public function getSerializerFor(string $type): ?callable
+    {
+        return $this->serializers[$type] ?? null;
+    }
+
     public function serialize($element, $content): string
     {
         $type = $element->type;
 
         if ($this->hasSerializerFor($type)) {
-            return call_user_func($this->serializers[$type], $element, $content);
+            return call_user_func($this->getSerializerFor($type), $element, $content);
         }
 
         $localMethod = 'serialize'.Str::studly($type);
