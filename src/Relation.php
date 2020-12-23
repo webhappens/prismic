@@ -13,7 +13,7 @@ class Relation
             return;
         }
 
-        return $this->query()->find($id);
+        return $this->query()->lang('*')->find($id);
     }
 
     public function many($data, $key)
@@ -22,7 +22,7 @@ class Relation
             return collect();
         }
 
-        return $this->query()->findMany(
+        return $this->query()->lang('*')->findMany(
             collect($data)
                 ->reject(function ($item) use ($key) {
                     return data_get($item, "{$key}.isBroken");
