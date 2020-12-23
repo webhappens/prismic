@@ -69,4 +69,14 @@ abstract class Link implements Htmlable
     {
         return $this->getUrl();
     }
+
+    public function __isset($key)
+    {
+        return method_exists($this, 'get' . ucfirst($key));
+    }
+
+    public function __get($key)
+    {
+        return $this->{'get' . ucfirst($key)}();
+    }
 }
