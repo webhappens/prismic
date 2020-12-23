@@ -46,6 +46,23 @@ class QueryTest extends TestCase
         $this->assertEquals(['foo' => 'a', 'bar' => 'b', 'baz' => 'c'], $options);
     }
 
+    public function test_lang_option()
+    {
+        $options = Query::make()
+            ->lang('*')
+            ->options(['foo' => 'bar'])
+            ->getOptions();
+
+        $this->assertEquals(['lang' => '*', 'foo' => 'bar'], $options);
+
+        $options = Query::make()
+            ->lang('en_GB')
+            ->options(['foo' => 'bar'])
+            ->getOptions();
+
+        $this->assertEquals(['lang' => 'en-gb', 'foo' => 'bar'], $options);
+    }
+
     public function test_api_resolves_from_container()
     {
         $this->swap(Api::class, 'foobar');
