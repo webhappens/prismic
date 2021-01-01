@@ -17,9 +17,19 @@ class RichText implements Htmlable
         return new static(...$parameters);
     }
 
-    public function __construct($data)
+    public function __construct($data = null)
     {
-        $this->data = $data;
+        if (is_string($data) && trim($data)) {
+            $this->data = [
+                (object) [
+                    'type' => 'paragraph',
+                    'text' => trim($data),
+                    'spans' => [],
+                ],
+            ];
+        } else if (is_array($data) && ! $this->isBlank($data)) {
+            $this->data = $data;
+        }
 
         $this->htmlSerializer = resolve(RichTextHtmlSerializer::class);
     }
@@ -148,6 +158,10 @@ class RichText implements Htmlable
 
     public function toHtml()
     {
+        if ( ! $this->data) {
+            return '';
+        }
+
         return PrismicRichText::asHtml(
             $this->data,
             resolve(DocumentUrlResolver::class),
@@ -157,6 +171,20 @@ class RichText implements Htmlable
 
     public function __toString()
     {
+        if ( ! $this->data) {
+            return '';
+        }
+
         return trim(PrismicRichText::asText($this->data));
     }
+
+    protected function isBlank($data)
+    {
+        $data = array_filter($data, function($item) {
+            return array_filter((array) $item) !== ['type' => 'paragraph'];
+        });
+
+        return count($data) === 0;
+    }
+
 }
