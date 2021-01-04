@@ -8,6 +8,7 @@ use WebHappens\Prismic\Contracts\Fields\RichTextHtmlSerializer as Contract;
 class RichTextHtmlSerializer implements Contract
 {
     protected $serializers = [];
+    protected $inlineOnly = false;
 
     public function registerSerializerFor(string $type, callable $serializer): Contract
     {
@@ -32,6 +33,10 @@ class RichTextHtmlSerializer implements Contract
     {
         $type = $element->type;
 
+        if ($this->inlineOnly && ! $this->isInlineElement($type)) {
+            return $content;
+        }
+
         if ($this->hasSerializerFor($type)) {
             return call_user_func($this->getSerializerFor($type), $element, $content);
         }
@@ -47,5 +52,21 @@ class RichTextHtmlSerializer implements Contract
     public function __invoke($element, $content): string
     {
         return $this->serialize($element, $content);
+    }
+
+    public function inlineOnly($inlineOnly = true)
+    {
+        $this->inlineOnly = $inlineOnly;
+
+        return $this;
+    }
+
+    public function isInlineElement($type): bool
+    {
+        return in_array($type, [
+            'strong',
+            'em',
+            'hyperlink',
+        ]);
     }
 }

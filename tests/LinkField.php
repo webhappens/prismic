@@ -2,7 +2,7 @@
 
 namespace WebHappens\Prismic\Tests;
 
-use Mockery as m;
+use Mockery;
 use WebHappens\Prismic\Fields\Link;
 use WebHappens\Prismic\Fields\LinkResolver;
 
@@ -10,7 +10,7 @@ class LinkField extends TestCase
 {
     public function test_resolve()
     {
-        $linkResolver = m::mock(LinkResolver::class)->makePartial();
+        $linkResolver = Mockery::mock(LinkResolver::class)->makePartial();
         $linkResolver->shouldReceive('resolve')->once()->with('foo')->andReturn(null);
         $this->swap(LinkResolver::class, $linkResolver);
         $this->assertEquals(Link::resolve('foo'), null);

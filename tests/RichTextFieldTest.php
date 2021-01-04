@@ -200,4 +200,35 @@ class RichTextFieldTest extends TestCase
         $this->assertEquals('', $richtext->asText());
         $this->assertEquals('', (string) $richtext);
     }
+
+    public function test_inline_only_rendering()
+    {
+        $richtext = RichText::make([
+            (object) [
+                "type" => "paragraph",
+                "text" => "Look at past papers, so you know what to expect.",
+                "spans" => [
+                    (object) [
+                        "start" => 8,
+                        "end" => 19,
+                        "type" => "hyperlink",
+                        "data" => (object) [
+                            "link_type" => "Web",
+                            "url" => "http://helpcentre.test/design-guide/components/text#",
+                        ],
+                    ],
+                    (object) [
+                        "start" => 41,
+                        "end" => 47,
+                        "type" => "strong",
+                    ],
+                ],
+            ],
+        ])->inlineOnly();
+
+        $this->assertInstanceOf(RichText::class, $richtext);
+        $this->assertEquals('Look at <a href="http://helpcentre.test/design-guide/components/text#">past papers</a>, so you know what to <strong>expect</strong>.', $richtext->toHtml());
+        $this->assertEquals('Look at past papers, so you know what to expect.', $richtext->asText());
+        $this->assertEquals('Look at past papers, so you know what to expect.', (string) $richtext);
+    }
 }
