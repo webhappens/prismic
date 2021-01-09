@@ -153,7 +153,7 @@ class RichTextFieldTest extends TestCase
             '<p><strong>This line rendered as bold text.</strong></p>' .
             '<p><em>This line rendered as italicised text.</em></p>' .
             '<p>Look at <a href="http://helpcentre.test/design-guide/components/text#">past papers</a>, so you know what to expect.</p>' .
-            '<p>Download your <a href="https://ouhelpcentre.cdn.prismic.io/ouhelpcentre/b0ac0d63-18e2-4dc9-a26a-7d9467ac6ba4_certificate-in-advanced-prof-practice-two-pg-2018-19.pdf">module results</a></p>' .
+            '<p>Download your <a href="https://ouhelpcentre.cdn.prismic.io/ouhelpcentre/b0ac0d63-18e2-4dc9-a26a-7d9467ac6ba4_certificate-in-advanced-prof-practice-two-pg-2018-19.pdf">module results (PDF 142KB)</a></p>' .
             '<ul>' .
                 '<li>List item one</li>' .
                 '<li>List item two</li>' .

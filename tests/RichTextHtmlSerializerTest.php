@@ -92,26 +92,49 @@ class RichTextHtmlSerializerTest extends TestCase
     public function test_span_override()
     {
         $richtext = RichText::make([(object) [
-            "type" => "paragraph",
-            "text" => "Look at past papers, so you know what to expect.",
-            "spans" => [
-                (object) [
-                    "start" => 8,
-                    "end" => 19,
-                    "type" => "hyperlink",
-                    "data" => (object) [
-                        "link_type" => "Web",
-                        "url" => "http://helpcentre.test/design-guide/components/text#",
+                "type" => "paragraph",
+                "text" => "Look at past papers, so you know what to expect.",
+                "spans" => [
+                    (object) [
+                        "start" => 8,
+                        "end" => 19,
+                        "type" => "hyperlink",
+                        "data" => (object) [
+                            "link_type" => "Web",
+                            "url" => "http://helpcentre.test/design-guide/components/text#",
+                        ],
                     ],
                 ],
-            ],
-        ]])
-        ->setHtmlSerializer(new RichTextHtmlSerializer)
-        ->hyperlink(function($element, $content) {
-            return Link::resolve($element->data, $content)->attributes(['class' => 'jazzy'])->toHtml();
-        });
+            ]])
+            ->setHtmlSerializer(new RichTextHtmlSerializer)
+            ->hyperlink(function($element, $content) {
+                return Link::resolve($element->data, $content)->attributes(['class' => 'jazzy'])->toHtml();
+            });
 
         $this->assertEquals('<p>Look at <a href="http://helpcentre.test/design-guide/components/text#" class="jazzy">past papers</a>, so you know what to expect.</p>', $richtext->toHtml());
+        $this->assertEquals('Look at past papers, so you know what to expect.', $richtext->asText());
+    }
+
+    public function test_renders_hyperlink_fragments_correctly()
+    {
+        $richtext = RichText::make([(object) [
+                "type" => "paragraph",
+                "text" => "Look at past papers, so you know what to expect.",
+                "spans" => [
+                    (object) [
+                        "start" => 8,
+                        "end" => 19,
+                        "type" => "hyperlink",
+                        "data" => (object) [
+                            "link_type" => "Web",
+                            "url" => "http://#past-papers",
+                        ],
+                    ],
+                ],
+            ]])
+            ->setHtmlSerializer(new RichTextHtmlSerializer);
+
+        $this->assertEquals('<p>Look at <a href="#past-papers">past papers</a>, so you know what to expect.</p>', $richtext->toHtml());
         $this->assertEquals('Look at past papers, so you know what to expect.', $richtext->asText());
     }
 }

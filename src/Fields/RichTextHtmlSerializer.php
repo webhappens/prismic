@@ -3,6 +3,7 @@
 namespace WebHappens\Prismic\Fields;
 
 use Illuminate\Support\Str;
+use WebHappens\Prismic\Fields\LinkResolver;
 use WebHappens\Prismic\Contracts\Fields\RichTextHtmlSerializer as Contract;
 
 class RichTextHtmlSerializer implements Contract
@@ -47,6 +48,11 @@ class RichTextHtmlSerializer implements Contract
         }
 
         return '';
+    }
+
+    public function serializeHyperlink($element, $content)
+    {
+        return (string) (new LinkResolver)->resolve($element->data, $content)->toHtml();
     }
 
     public function __invoke($element, $content): string
