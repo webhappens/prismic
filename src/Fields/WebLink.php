@@ -10,7 +10,7 @@ class WebLink extends Link
             return $fragment;
         }
 
-        return parent::getUrl();
+        return self::replaceAbsolute(self::replaceRelative(parent::getUrl()));
     }
 
     protected static function matchWhenFragmentOnly($url): ?string
@@ -20,5 +20,15 @@ class WebLink extends Link
         }
 
         return null;
+    }
+
+    protected static function replaceAbsolute($url): ?string
+    {
+        return preg_replace('@^https?:///@', '/', $url);
+    }
+
+    protected static function replaceRelative($url): ?string
+    {
+        return preg_replace('@^https?://\./@', '', $url);
     }
 }

@@ -5,7 +5,7 @@ namespace WebHappens\Prismic\Tests;
 use WebHappens\Prismic\Fields\DocumentLink;
 use WebHappens\Prismic\Tests\Stubs\DocumentAStub;
 
-class DocumentLinkFieldTest extends LinkField
+class DocumentLinkFieldTest extends LinkFieldTest
 {
     public function test_make()
     {

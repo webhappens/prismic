@@ -4,7 +4,7 @@ namespace WebHappens\Prismic\Tests;
 
 use WebHappens\Prismic\Fields\MediaLink;
 
-class MediaLinkFieldTest extends LinkField
+class MediaLinkFieldTest extends LinkFieldTest
 {
     public function test_make()
     {

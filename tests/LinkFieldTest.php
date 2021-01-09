@@ -6,7 +6,7 @@ use Mockery;
 use WebHappens\Prismic\Fields\Link;
 use WebHappens\Prismic\Fields\LinkResolver;
 
-class LinkField extends TestCase
+class LinkFieldTest extends TestCase
 {
     public function test_resolve()
     {

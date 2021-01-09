@@ -4,7 +4,7 @@ namespace WebHappens\Prismic\Tests;
 
 use WebHappens\Prismic\Fields\WebLink;
 
-class WebLinkFieldTest extends LinkField
+class WebLinkFieldTest extends LinkFieldTest
 {
     public function test_make()
     {
@@ -17,12 +17,23 @@ class WebLinkFieldTest extends LinkField
     public function test_fragment_only()
     {
         // Prismic forces a scheme to all links
-
         $link = WebLink::make('https://#fragment');
         $this->assertEquals('#fragment', $link->getUrl());
 
         $link = WebLink::make('http://#fragment');
         $this->assertEquals('#fragment', $link->getUrl());
+    }
+
+    public function test_absolute_replacement()
+    {
+        $link = WebLink::make('https:///some-url#fragment', 'A test of absolute links');
+        $this->assertEquals('/some-url#fragment', $link->getUrl());
+    }
+
+    public function test_relative_replacement()
+    {
+        $link = WebLink::make('https://./some-url#fragment', 'A test of relative links');
+        $this->assertEquals('some-url#fragment', $link->getUrl());
     }
 
     public function test_open_in_new_tab()
