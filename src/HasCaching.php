@@ -13,7 +13,7 @@ trait HasCaching
     public static function eagerLoadAll(): Query
     {
         if ( ! static::$allDocumentsCached) {
-            static::make()->cache()->get();
+            static::make()->cache()->lang('*')->get();
             static::$allDocumentsCached = true;
         }
 
