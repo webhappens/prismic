@@ -137,4 +137,55 @@ class RichTextHtmlSerializerTest extends TestCase
         $this->assertEquals('<p>Look at <a href="#past-papers">past papers</a>, so you know what to expect.</p>', $richtext->toHtml());
         $this->assertEquals('Look at past papers, so you know what to expect.', $richtext->asText());
     }
+
+    public function test_heading_shifts()
+    {
+        $richtext = RichText::make([(object) [
+            "type" => "heading3",
+            "text" => "Heading 3 now 2",
+            "spans" => [],
+        ]])
+        ->setHtmlSerializer(
+            (new RichTextHtmlSerializer)->shiftHeadings(-1)
+        );
+
+        $this->assertEquals('<h2>Heading 3 now 2</h2>', $richtext->toHtml());
+        $this->assertEquals('Heading 3 now 2', $richtext->asText());
+
+        $richtext = RichText::make([(object) [
+            "type" => "heading3",
+            "text" => "Heading 3 now 4",
+            "spans" => [],
+        ]])
+        ->setHtmlSerializer(
+            (new RichTextHtmlSerializer)->shiftHeadings(1)
+        );
+
+        $this->assertEquals('<h4>Heading 3 now 4</h4>', $richtext->toHtml());
+        $this->assertEquals('Heading 3 now 4', $richtext->asText());
+
+        $richtext = RichText::make([(object) [
+            "type" => "heading3",
+            "text" => "Heading 3 now 1",
+            "spans" => [],
+        ]])
+        ->setHtmlSerializer(
+            (new RichTextHtmlSerializer)->shiftHeadings(-5)
+        );
+
+        $this->assertEquals('<h1>Heading 3 now 1</h1>', $richtext->toHtml());
+        $this->assertEquals('Heading 3 now 1', $richtext->asText());
+
+        $richtext = RichText::make([(object) [
+            "type" => "heading3",
+            "text" => "Heading 3 now 6",
+            "spans" => [],
+        ]])
+        ->setHtmlSerializer(
+            (new RichTextHtmlSerializer)->shiftHeadings(5)
+        );
+
+        $this->assertEquals('<h6>Heading 3 now 6</h6>', $richtext->toHtml());
+        $this->assertEquals('Heading 3 now 6', $richtext->asText());
+    }
 }

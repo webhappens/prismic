@@ -139,6 +139,15 @@ class RichText implements Htmlable
         return $this;
     }
 
+    public function shiftHeadings(int $shiftBy)
+    {
+        if ($this->htmlSerializer) {
+            $this->htmlSerializer->shiftHeadings($shiftBy);
+        }
+
+        return $this;
+    }
+
     public function inlineOnly($inlineOnly = true)
     {
         if ($this->htmlSerializer) {

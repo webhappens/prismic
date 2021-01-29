@@ -10,6 +10,7 @@ class RichTextHtmlSerializer implements Contract
 {
     protected $serializers = [];
     protected $inlineOnly = false;
+    protected $shiftHeadings = 0;
 
     public function registerSerializerFor(string $type, callable $serializer): Contract
     {
@@ -38,6 +39,20 @@ class RichTextHtmlSerializer implements Contract
             return $content;
         }
 
+        if ($this->shiftHeadings && Str::startsWith($type, 'heading')) {
+            $newHeadingLevel = (int) (str_replace('heading', '', $type) + $this->shiftHeadings);
+
+            if ($newHeadingLevel < 1) {
+                $newHeadingLevel = 1;
+            } else if ($newHeadingLevel > 6) {
+                $newHeadingLevel = 6;
+            }
+
+            $element->type = 'heading' . (int) $newHeadingLevel;
+
+            return (clone $this)->shiftHeadings(0)->serialize($element, $content);
+        }
+
         if ($this->hasSerializerFor($type)) {
             return call_user_func($this->getSerializerFor($type), $element, $content);
         }
@@ -58,6 +73,12 @@ class RichTextHtmlSerializer implements Contract
     public function __invoke($element, $content): string
     {
         return $this->serialize($element, $content);
+    }
+
+    public function shiftHeadings(int $shiftBy = 0) {
+        $this->shiftHeadings = $shiftBy;
+
+        return $this;
     }
 
     public function inlineOnly($inlineOnly = true)
