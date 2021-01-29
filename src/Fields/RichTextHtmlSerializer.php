@@ -10,6 +10,7 @@ class RichTextHtmlSerializer implements Contract
 {
     protected $serializers = [];
     protected $inlineOnly = false;
+    protected $shiftHeadings = 0;
 
     public function registerSerializerFor(string $type, callable $serializer): Contract
     {
@@ -32,17 +33,27 @@ class RichTextHtmlSerializer implements Contract
 
     public function serialize($element, $content): string
     {
-        $type = $element->type;
-
-        if ($this->inlineOnly && ! $this->isInlineElement($type)) {
+        if ($this->inlineOnly && ! $this->isInlineElement($element->type)) {
             return $content;
         }
 
-        if ($this->hasSerializerFor($type)) {
-            return call_user_func($this->getSerializerFor($type), $element, $content);
+        if ($this->shiftHeadings && Str::startsWith($element->type, 'heading')) {
+            $newHeadingLevel = str_replace('heading', '', $element->type) + $this->shiftHeadings;
+
+            if ($newHeadingLevel < 1) {
+                $newHeadingLevel = 1;
+            } else if ($newHeadingLevel > 6) {
+                $newHeadingLevel = 6;
+            }
+
+            $element->type = "heading$newHeadingLevel";
         }
 
-        $localMethod = 'serialize'.Str::studly($type);
+        if ($this->hasSerializerFor($element->type)) {
+            return call_user_func($this->getSerializerFor($element->type), $element, $content);
+        }
+
+        $localMethod = 'serialize'.Str::studly($element->type);
         if (method_exists($this, $localMethod)) {
             return $this->$localMethod($element, $content);
         }
@@ -58,6 +69,12 @@ class RichTextHtmlSerializer implements Contract
     public function __invoke($element, $content): string
     {
         return $this->serialize($element, $content);
+    }
+
+    public function shiftHeadings(int $shiftBy = 0) {
+        $this->shiftHeadings = $shiftBy;
+
+        return $this;
     }
 
     public function inlineOnly($inlineOnly = true)
