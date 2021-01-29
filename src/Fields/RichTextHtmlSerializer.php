@@ -71,13 +71,14 @@ class RichTextHtmlSerializer implements Contract
         return $this->serialize($element, $content);
     }
 
-    public function shiftHeadings(int $shiftBy = 0) {
+    public function shiftHeadings(int $shiftBy = 0): Contract
+    {
         $this->shiftHeadings = $shiftBy;
 
         return $this;
     }
 
-    public function inlineOnly($inlineOnly = true)
+    public function inlineOnly(bool $inlineOnly = true): Contract
     {
         $this->inlineOnly = $inlineOnly;
 
