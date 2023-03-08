@@ -22,8 +22,8 @@
         }
     ],
     "require": {
-        "php": "8",
-        "laravel/framework": "9 - 10",
+        "php": "^8.0",
+        "laravel/framework": "^9.0|^10.0",
         "prismic/php-sdk": "^5.0"
     },
     "require-dev": {
